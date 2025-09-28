@@ -108,31 +108,15 @@ export default function AvailabilityStep({ data, onUpdate }: StepProps) {
       </Text>
 
       <Card style={styles.inputCard}>
-        {/* Available Now Toggle */}
-        <Toggle
-          label="Available Now"
-          value={!data.availableFrom}
-          onValueChange={(value) =>
-            onUpdate({
-              availableFrom: value
-                ? undefined
-                : new Date().toISOString().split("T")[0],
-            })
-          }
-          style={styles.availableNowToggle}
-        />
-
         {/* Date Range Selection */}
-        {data.availableFrom && (
-          <DateRangePicker
-            label="Availability Period"
-            value={dateRange}
-            onDateRangeChange={handleDateRangeChange}
-            minDate={getMinDate()}
-            maxDate={getMaxDate()}
-            style={styles.dateRangePicker}
-          />
-        )}
+        <DateRangePicker
+          label="Availability Period"
+          value={dateRange}
+          onDateRangeChange={handleDateRangeChange}
+          minDate={getMinDate()}
+          maxDate={getMaxDate()}
+          style={styles.dateRangePicker}
+        />
 
         {/* Flexibility Controls */}
         {dateRange.startDate && (

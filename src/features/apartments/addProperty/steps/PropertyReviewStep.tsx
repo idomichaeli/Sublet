@@ -50,7 +50,7 @@ export default function ReviewStep({ data, onUpdate }: StepProps) {
       .join(", ");
   };
 
-  // Calculate total rooms including bedrooms, living room, and additional rooms
+  // Calculate total rooms including bedrooms and living room (additional rooms excluded)
   const calculateTotalRooms = () => {
     let totalRooms = 0;
 
@@ -63,12 +63,12 @@ export default function ReviewStep({ data, onUpdate }: StepProps) {
       totalRooms += 1;
     }
 
-    // Add only specific additional rooms that count towards total
-    const countableRooms = ["Kitchen", "Balcony", "Closet room", "Garden/Yard"];
-    const countableAdditionalRooms =
-      data.additionalRooms?.filter((room) => countableRooms.includes(room)) ||
-      [];
-    totalRooms += countableAdditionalRooms.length;
+    // Additional rooms are no longer counted towards total room count
+    // const countableRooms = ["Kitchen", "Balcony", "Closet room", "Garden/Yard"];
+    // const countableAdditionalRooms =
+    //   data.additionalRooms?.filter((room) => countableRooms.includes(room)) ||
+    //   [];
+    // totalRooms += countableAdditionalRooms.length;
 
     return totalRooms;
   };

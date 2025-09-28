@@ -16,9 +16,10 @@ const REQUIRED_AMENITIES = [
   { id: "pet_friendly", label: "Pet-friendly", icon: "🐕" },
   { id: "smoking_allowed", label: "Smoking Allowed", icon: "🚬" },
   { id: "accessible", label: "Accessible", icon: "♿" },
+  { id: "none", label: "None of them", icon: "❌" },
 ];
 
-const OPTIONAL_AMENITIES = [
+const ADDITIONAL_AMENITIES = [
   { id: "heating", label: "Heating", icon: "🔥" },
   { id: "parking", label: "Parking", icon: "🚗" },
   { id: "balcony", label: "Balcony", icon: "🌅" },
@@ -32,9 +33,53 @@ const OPTIONAL_AMENITIES = [
 
 export default function AmenitiesStep({ data, onUpdate }: StepProps) {
   const handleAmenityToggle = (amenityId: string) => {
-    const newAmenities = data.amenities.includes(amenityId)
-      ? data.amenities.filter((id) => id !== amenityId)
-      : [...data.amenities, amenityId];
+    let newAmenities;
+    const requiredAmenityIds = [
+      "wifi",
+      "ac",
+      "elevator",
+      "furnished",
+      "pet_friendly",
+      "smoking_allowed",
+      "accessible",
+      "none",
+    ];
+    const additionalAmenityIds = [
+      "heating",
+      "parking",
+      "balcony",
+      "gym",
+      "pool",
+      "laundry",
+      "storage",
+      "garden",
+      "rooftop",
+    ];
+
+    if (amenityId === "none") {
+      // If "None of them" is selected, clear only required amenities but keep additional ones
+      if (data.amenities.includes("none")) {
+        newAmenities = data.amenities.filter((id) =>
+          additionalAmenityIds.includes(id)
+        );
+      } else {
+        newAmenities = [
+          ...data.amenities.filter((id) => additionalAmenityIds.includes(id)),
+          "none",
+        ];
+      }
+    } else if (requiredAmenityIds.includes(amenityId)) {
+      // If a required amenity is selected, remove "none" and toggle the selected amenity
+      newAmenities = data.amenities.includes(amenityId)
+        ? data.amenities.filter((id) => id !== amenityId)
+        : [...data.amenities.filter((id) => id !== "none"), amenityId];
+    } else {
+      // If an additional amenity is selected, just toggle it (don't affect "none")
+      newAmenities = data.amenities.includes(amenityId)
+        ? data.amenities.filter((id) => id !== amenityId)
+        : [...data.amenities, amenityId];
+    }
+
     onUpdate({ amenities: newAmenities });
   };
 
@@ -72,18 +117,38 @@ export default function AmenitiesStep({ data, onUpdate }: StepProps) {
 
       {renderAmenitiesSection(REQUIRED_AMENITIES, "Essential Amenities", true)}
       {renderAmenitiesSection(
-        OPTIONAL_AMENITIES,
+        ADDITIONAL_AMENITIES,
         "Additional Amenities",
         false
       )}
 
-      {data.amenities.length > 0 && (
-        <View style={styles.selectedContainer}>
-          <Text style={styles.selectedLabel}>
-            Selected: {data.amenities.length} amenities
-          </Text>
-        </View>
-      )}
+      {(() => {
+        const requiredAmenityIds = [
+          "wifi",
+          "ac",
+          "elevator",
+          "furnished",
+          "pet_friendly",
+          "smoking_allowed",
+          "accessible",
+          "none",
+        ];
+        const hasRequiredAmenity = data.amenities.some((amenityId) =>
+          requiredAmenityIds.includes(amenityId)
+        );
+
+        if (!hasRequiredAmenity) {
+          return (
+            <View style={styles.requiredContainer}>
+              <Text style={styles.requiredLabel}>
+                ⚠️ Please select at least one amenity from the Essential
+                Amenities section to continue
+              </Text>
+            </View>
+          );
+        }
+        return null;
+      })()}
     </View>
   );
 }
@@ -135,16 +200,17 @@ const styles = StyleSheet.create({
   amenityChip: {
     marginBottom: spacing.sm,
   },
-  selectedContainer: {
+  requiredContainer: {
     padding: spacing.md,
-    backgroundColor: colors.primary[50],
+    backgroundColor: colors.warning[50],
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: colors.primary[200],
+    borderColor: colors.warning[200],
+    marginTop: spacing.md,
   },
-  selectedLabel: {
+  requiredLabel: {
     ...textStyles.caption,
-    color: colors.primary[700],
+    color: colors.warning[700],
     fontWeight: "600",
     textAlign: "center",
   },

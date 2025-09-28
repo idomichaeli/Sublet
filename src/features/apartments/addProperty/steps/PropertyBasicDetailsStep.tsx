@@ -12,16 +12,15 @@ import Input from "../../../../shared/components/ui/Input";
 import Toggle from "../../../../shared/components/ui/Toggle";
 import { StepProps } from "../types/PropertyCreationData";
 
+// Specific room options (shown above Additional Rooms)
+const SPECIFIC_ROOMS = ["Kitchen", "Balcony", "Garden/Yard", "Pantry"];
+
 // Additional room options
 const ADDITIONAL_ROOMS = [
   "Dining room",
-  "Kitchen",
-  "Pantry",
   "Office room",
-  "Balcony",
   "Garage",
   "Closet room",
-  "Garden/Yard",
   "Outdoor Kitchen",
 ];
 
@@ -55,6 +54,7 @@ export default function BasicDetailsStep({ data, onUpdate }: StepProps) {
   const [bathroomError, setBathroomError] = useState<string | undefined>(
     undefined
   );
+  const [showAdditionalRooms, setShowAdditionalRooms] = useState(false);
 
   // Sync local state with data when it changes from outside
   useEffect(() => {
@@ -223,12 +223,14 @@ export default function BasicDetailsStep({ data, onUpdate }: StepProps) {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Additional Rooms</Text>
+          <Text style={styles.inputLabel}>
+            Kitchen, Balcony, Garden & Pantry
+          </Text>
           <Text style={styles.inputSubtext}>
-            Select all additional rooms available in your property
+            Select all available in your property
           </Text>
           <View style={styles.roomOptionsContainer}>
-            {ADDITIONAL_ROOMS.map((room) => (
+            {SPECIFIC_ROOMS.map((room) => (
               <View key={room} style={styles.roomOption}>
                 <Toggle
                   value={data.additionalRooms?.includes(room) || false}
@@ -241,6 +243,39 @@ export default function BasicDetailsStep({ data, onUpdate }: StepProps) {
               </View>
             ))}
           </View>
+        </View>
+
+        <View style={styles.inputGroup}>
+          <View style={styles.additionalRoomsHeader}>
+            <Text style={styles.inputLabel}>Additional Rooms</Text>
+            <Chip
+              label={showAdditionalRooms ? "Hide" : "Show"}
+              selected={false}
+              onPress={() => setShowAdditionalRooms(!showAdditionalRooms)}
+              variant="secondary"
+            />
+          </View>
+          {showAdditionalRooms && (
+            <>
+              <Text style={styles.inputSubtext}>
+                Select all additional rooms available in your property
+              </Text>
+              <View style={styles.roomOptionsContainer}>
+                {ADDITIONAL_ROOMS.map((room) => (
+                  <View key={room} style={styles.roomOption}>
+                    <Toggle
+                      value={data.additionalRooms?.includes(room) || false}
+                      onValueChange={(isSelected) =>
+                        handleRoomToggle(room, isSelected)
+                      }
+                      size="sm"
+                    />
+                    <Text style={styles.roomOptionLabel}>{room}</Text>
+                  </View>
+                ))}
+              </View>
+            </>
+          )}
         </View>
 
         <View style={styles.inputGroup}>
@@ -338,5 +373,11 @@ const styles = StyleSheet.create({
     color: colors.neutral[700],
     marginLeft: spacing.sm,
     flex: 1,
+  },
+  additionalRoomsHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: spacing.sm,
   },
 });

@@ -29,6 +29,301 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
   const [showShelterOptions, setShowShelterOptions] = useState(false);
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const [pulseAnim] = useState(new Animated.Value(1));
+  const [streetSuggestions, setStreetSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Common Tel Aviv street names for autocomplete
+  const TEL_AVIV_STREETS = [
+    "Dizengoff",
+    "Rothschild",
+    "Ben Yehuda",
+    "Allenby",
+    "King George",
+    "Bialik",
+    "Nahalat Binyamin",
+    "Shenkin",
+    "Frishman",
+    "Gordon",
+    "Ben Gurion",
+    "Herzl",
+    "Jabotinsky",
+    "Weizmann",
+    "Begin",
+    "Rabin",
+    "Peres",
+    "Sharon",
+    "Barak",
+    "Ariel",
+    "Ben Ari",
+    "Ben Zvi",
+    "HaHashmonaim",
+    "HaMelacha",
+    "HaAliya",
+    "HaShalom",
+    "HaMasger",
+    "HaKovshim",
+    "HaTzofim",
+    "HaShomer",
+    "HaPalmach",
+    "HaEtzel",
+    "HaLehi",
+    "HaShomer HaTzair",
+    "HaNoar HaOved",
+    "HaMizrachi",
+    "HaPoel",
+    "HaMaccabi",
+    "HaKibbutz",
+    "HaMoshav",
+    "HaKfar",
+    "HaIr",
+    "HaShuk",
+    "HaBima",
+    "HaOpera",
+    "HaSymphony",
+    "HaCinema",
+    "HaTheater",
+    "HaMuseum",
+    "HaLibrary",
+    "HaUniversity",
+    "HaTechnion",
+    "HaCollege",
+    "HaSchool",
+    "HaKindergarten",
+    "HaHospital",
+    "HaClinic",
+    "HaPharmacy",
+    "HaBank",
+    "HaPost",
+    "HaPolice",
+    "HaFire",
+    "HaAmbulance",
+    "HaTaxi",
+    "HaBus",
+    "HaTrain",
+    "HaAirport",
+    "HaPort",
+    "HaBeach",
+    "HaPark",
+    "HaGarden",
+    "HaForest",
+    "HaMountain",
+    "HaValley",
+    "HaRiver",
+    "HaLake",
+    "HaSea",
+    "HaOcean",
+    "HaDesert",
+    "HaField",
+    "HaFarm",
+    "HaVineyard",
+    "HaOrchard",
+    "HaGreenhouse",
+    "HaBarn",
+    "HaStable",
+    "HaChicken",
+    "HaCow",
+    "HaSheep",
+    "HaGoat",
+    "HaPig",
+    "HaHorse",
+    "HaDonkey",
+    "HaCamel",
+    "HaElephant",
+    "HaLion",
+    "HaTiger",
+    "HaBear",
+    "HaWolf",
+    "HaFox",
+    "HaRabbit",
+    "HaSquirrel",
+    "HaMouse",
+    "HaRat",
+    "HaCat",
+    "HaDog",
+    "HaBird",
+    "HaFish",
+    "HaSnake",
+    "HaLizard",
+    "HaFrog",
+    "HaTurtle",
+    "HaButterfly",
+    "HaBee",
+    "HaAnt",
+    "HaSpider",
+    "HaFly",
+    "HaMosquito",
+    "HaWorm",
+    "HaSnail",
+    "HaCrab",
+    "HaLobster",
+    "HaShrimp",
+    "HaOctopus",
+    "HaSquid",
+    "HaJellyfish",
+    "HaStarfish",
+    "HaCoral",
+    "HaSeaweed",
+    "HaAlgae",
+    "HaMoss",
+    "HaFern",
+    "HaFlower",
+    "HaTree",
+    "HaBush",
+    "HaGrass",
+    "HaLeaf",
+    "HaBranch",
+    "HaRoot",
+    "HaSeed",
+    "HaFruit",
+    "HaVegetable",
+    "HaGrain",
+    "HaNut",
+    "HaBerry",
+    "HaHerb",
+    "HaSpice",
+    "HaSalt",
+    "HaSugar",
+    "HaHoney",
+    "HaOil",
+    "HaVinegar",
+    "HaWine",
+    "HaBeer",
+    "HaWhiskey",
+    "HaVodka",
+    "HaRum",
+    "HaGin",
+    "HaTequila",
+    "HaBrandy",
+    "HaCognac",
+    "HaChampagne",
+    "HaCoffee",
+    "HaTea",
+    "HaMilk",
+    "HaWater",
+    "HaJuice",
+    "HaSoda",
+    "HaLemonade",
+    "HaIce",
+    "HaCream",
+    "HaButter",
+    "HaCheese",
+    "HaYogurt",
+    "HaBread",
+    "HaCake",
+    "HaCookie",
+    "HaCandy",
+    "HaChocolate",
+    "HaIce Cream",
+    "HaPudding",
+    "HaJelly",
+    "HaJam",
+    "HaMarmalade",
+    "HaSyrup",
+    "HaSauce",
+    "HaKetchup",
+    "HaMustard",
+    "HaMayonnaise",
+    "HaSalad",
+    "HaSoup",
+    "HaStew",
+    "HaRoast",
+    "HaGrill",
+    "HaFry",
+    "HaBake",
+    "HaBoil",
+    "HaSteam",
+    "HaSmoke",
+    "HaPickle",
+    "HaPreserve",
+    "HaCan",
+    "HaFreeze",
+    "HaDry",
+    "HaFresh",
+    "HaFrozen",
+    "HaCanned",
+    "HaDried",
+    "HaSmoked",
+    "HaPickled",
+    "HaPreserved",
+    "HaOrganic",
+    "HaNatural",
+    "HaHealthy",
+    "HaDiet",
+    "HaLow",
+    "HaHigh",
+    "HaMedium",
+    "HaSmall",
+    "HaLarge",
+    "HaBig",
+    "HaLittle",
+    "HaTiny",
+    "HaHuge",
+    "HaGiant",
+    "HaMassive",
+    "HaEnormous",
+    "HaColossal",
+    "HaMicroscopic",
+    "HaInvisible",
+    "HaTransparent",
+    "HaOpaque",
+    "HaClear",
+    "HaCloudy",
+    "HaFoggy",
+    "HaMisty",
+    "HaRainy",
+    "HaSnowy",
+    "HaSunny",
+    "HaWindy",
+    "HaStormy",
+    "HaCalm",
+    "HaQuiet",
+    "HaLoud",
+    "HaNoisy",
+    "HaSilent",
+    "HaPeaceful",
+    "HaChaotic",
+    "HaOrderly",
+    "HaMessy",
+    "HaClean",
+    "HaDirty",
+    "HaNew",
+    "HaOld",
+    "HaYoung",
+    "HaAncient",
+    "HaModern",
+    "HaTraditional",
+    "HaClassic",
+    "HaContemporary",
+    "HaFuturistic",
+    "HaVintage",
+    "HaAntique",
+    "HaRare",
+    "HaCommon",
+    "HaPopular",
+    "HaUnpopular",
+    "HaFamous",
+    "HaUnknown",
+    "HaPublic",
+    "HaPrivate",
+    "HaPersonal",
+    "HaProfessional",
+    "HaBusiness",
+    "HaCommercial",
+    "HaIndustrial",
+    "HaResidential",
+    "HaUrban",
+    "HaRural",
+    "HaSuburban",
+    "HaMetropolitan",
+    "HaCosmopolitan",
+    "HaInternational",
+    "HaNational",
+    "HaLocal",
+    "HaRegional",
+    "HaGlobal",
+    "HaWorldwide",
+    "HaUniversal",
+  ];
 
   // Animation for loading state
   React.useEffect(() => {
@@ -56,8 +351,11 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
   const validateTelAvivAddress = async (
     street: string,
     number: string
-  ): Promise<boolean> => {
-    if (!street || !number) return false;
+  ): Promise<{
+    isValid: boolean;
+    coordinates?: { lat: number; lng: number };
+  }> => {
+    if (!street || !number) return { isValid: false };
 
     try {
       const fullAddress = `${street} ${number}, Tel Aviv, Israel`;
@@ -74,18 +372,24 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
           west: 34.75,
         };
 
-        return (
+        const isInTelAviv =
           latitude >= telAvivBounds.south &&
           latitude <= telAvivBounds.north &&
           longitude >= telAvivBounds.west &&
-          longitude <= telAvivBounds.east
-        );
+          longitude <= telAvivBounds.east;
+
+        return {
+          isValid: isInTelAviv,
+          coordinates: isInTelAviv
+            ? { lat: latitude, lng: longitude }
+            : undefined,
+        };
       }
     } catch (error) {
       console.log("Address validation error:", error);
     }
 
-    return false;
+    return { isValid: false };
   };
 
   // Function to detect neighborhood from address
@@ -152,35 +456,162 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
     latitude: number,
     longitude: number
   ): typeof TelAvivLocation | null => {
-    let closestArea: typeof TelAvivLocation | null = null;
-    let minDistance = Infinity;
+    // Define approximate neighborhood boundaries (simplified for demo)
+    const neighborhoodBoundaries: {
+      [key: string]: {
+        north: number;
+        south: number;
+        east: number;
+        west: number;
+      };
+    } = {
+      "Neve Avivim": { north: 32.12, south: 32.1, east: 34.8, west: 34.78 },
+      "Azorei Hen": { north: 32.13, south: 32.11, east: 34.82, west: 34.8 },
+      "Kokhav HaTzafon": {
+        north: 32.14,
+        south: 32.12,
+        east: 34.84,
+        west: 34.82,
+      },
+      "Ramat Aviv Aleph": {
+        north: 32.13,
+        south: 32.11,
+        east: 34.81,
+        west: 34.79,
+      },
+      "Ramat Aviv Gimmel": {
+        north: 32.12,
+        south: 32.1,
+        east: 34.8,
+        west: 34.78,
+      },
+      "Ramat Aviv HaHadasha": {
+        north: 32.11,
+        south: 32.09,
+        east: 34.79,
+        west: 34.77,
+      },
+      "Ne'ot Afeka": { north: 32.1, south: 32.08, east: 34.78, west: 34.76 },
+      "Ma'oz Aviv": { north: 32.09, south: 32.07, east: 34.77, west: 34.75 },
+      "Hadar Yosef": { north: 32.08, south: 32.06, east: 34.76, west: 34.74 },
+      Tzahala: { north: 32.07, south: 32.05, east: 34.75, west: 34.73 },
+      Revivim: { north: 32.06, south: 32.04, east: 34.74, west: 34.72 },
+      "Tel Baruch": { north: 32.05, south: 32.03, east: 34.73, west: 34.71 },
+      "HaTzafon HaYashan (Old North)": {
+        north: 32.08,
+        south: 32.06,
+        east: 34.78,
+        west: 34.76,
+      },
+      "Lev HaIr": { north: 32.07, south: 32.05, east: 34.77, west: 34.75 },
+      Montefiori: { north: 32.06, south: 32.04, east: 34.76, west: 34.74 },
+      "Yehuda HaMaccabi": {
+        north: 32.05,
+        south: 32.03,
+        east: 34.75,
+        west: 34.73,
+      },
+      Bavli: { north: 32.04, south: 32.02, east: 34.74, west: 34.72 },
+      "Tzamarot Ayalon": {
+        north: 32.03,
+        south: 32.01,
+        east: 34.73,
+        west: 34.71,
+      },
+      "Giv'at Amal Bet": { north: 32.02, south: 32.0, east: 34.72, west: 34.7 },
+      "Kerem HaTeimanim": {
+        north: 32.08,
+        south: 32.06,
+        east: 34.79,
+        west: 34.77,
+      },
+      "Neve Tzedek": { north: 32.07, south: 32.05, east: 34.78, west: 34.76 },
+      Shabazi: { north: 32.06, south: 32.04, east: 34.77, west: 34.75 },
+      Florentin: { north: 32.05, south: 32.03, east: 34.76, west: 34.74 },
+      "Neve Sha'anan": { north: 32.04, south: 32.02, east: 34.75, west: 34.73 },
+      "Neve Ofer": { north: 32.03, south: 32.01, east: 34.74, west: 34.72 },
+      "Kiryat Shalom": { north: 32.02, south: 32.0, east: 34.73, west: 34.71 },
+      Shapira: { north: 32.01, south: 31.99, east: 34.72, west: 34.7 },
+      HaTikva: { north: 32.0, south: 31.98, east: 34.71, west: 34.69 },
+      "Giv'at Herzl": { north: 31.99, south: 31.97, east: 34.7, west: 34.68 },
+      "Abu Kabir": { north: 31.98, south: 31.96, east: 34.69, west: 34.67 },
+      "American–German Colony": {
+        north: 32.07,
+        south: 32.05,
+        east: 34.79,
+        west: 34.77,
+      },
+      "Nahalat Yitzhak": {
+        north: 32.06,
+        south: 32.04,
+        east: 34.78,
+        west: 34.76,
+      },
+      Bitzaron: { north: 32.05, south: 32.03, east: 34.77, west: 34.75 },
+      "Ramat Yisrael": { north: 32.04, south: 32.02, east: 34.76, west: 34.74 },
+      "Tel Haim": { north: 32.03, south: 32.01, east: 34.75, west: 34.73 },
+      "Ramat HaTayasim": {
+        north: 32.02,
+        south: 32.0,
+        east: 34.74,
+        west: 34.72,
+      },
+      "Neve Tzahal": { north: 32.01, south: 31.99, east: 34.73, west: 34.71 },
+      "Kfar Shalem": { north: 32.0, south: 31.98, east: 34.72, west: 34.7 },
+      HaArgazim: { north: 31.99, south: 31.97, east: 34.71, west: 34.69 },
+      Ezra: { north: 31.98, south: 31.96, east: 34.7, west: 34.68 },
+      "Yad Eliyahu": { north: 31.97, south: 31.95, east: 34.69, west: 34.67 },
+      "Old Jaffa": { north: 32.05, south: 32.03, east: 34.75, west: 34.73 },
+      Ajami: { north: 32.04, south: 32.02, east: 34.74, west: 34.72 },
+      Menashiya: { north: 32.03, south: 32.01, east: 34.73, west: 34.71 },
+      "Giv'at Aliyah": { north: 32.02, south: 32.0, east: 34.72, west: 34.7 },
+      Tzahalon: { north: 32.01, south: 31.99, east: 34.71, west: 34.69 },
+    };
 
-    TEL_AVIV_LOCATIONS.forEach((areaName) => {
-      // For now, just return the first location since TEL_AVIV_LOCATIONS is an array of strings
-      if (areaName) {
-        // Calculate distance using Haversine formula
-        const R = 6371; // Earth's radius in kilometers
-        const dLat =
-          ((latitude - TelAvivLocation.coordinates.lat) * Math.PI) / 180;
-        const dLon =
-          ((longitude - TelAvivLocation.coordinates.lng) * Math.PI) / 180;
-        const a =
-          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-          Math.cos((TelAvivLocation.coordinates.lat * Math.PI) / 180) *
-            Math.cos((latitude * Math.PI) / 180) *
-            Math.sin(dLon / 2) *
-            Math.sin(dLon / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        const distance = R * c; // Distance in kilometers
-
-        if (distance < minDistance) {
-          minDistance = distance;
-          closestArea = TelAvivLocation;
-        }
+    // Check which neighborhood the coordinates fall into
+    for (const [neighborhoodName, bounds] of Object.entries(
+      neighborhoodBoundaries
+    )) {
+      if (
+        latitude >= bounds.south &&
+        latitude <= bounds.north &&
+        longitude >= bounds.west &&
+        longitude <= bounds.east
+      ) {
+        const neighborhoodIndex = TEL_AVIV_LOCATIONS.indexOf(neighborhoodName);
+        return {
+          id: `neighborhood-${neighborhoodIndex}`,
+          name: neighborhoodName,
+          coordinates: { lat: latitude, lng: longitude },
+          areas: [
+            {
+              id: `neighborhood-${neighborhoodIndex}`,
+              name: neighborhoodName,
+              city: "Tel Aviv",
+              apartments: 0,
+            },
+          ],
+        };
       }
-    });
+    }
 
-    return closestArea;
+    // Fallback: return a default neighborhood from TEL_AVIV_LOCATIONS
+    const defaultNeighborhood = "Lev HaIr"; // Central Tel Aviv as default
+    const defaultIndex = TEL_AVIV_LOCATIONS.indexOf(defaultNeighborhood);
+
+    return {
+      id: `neighborhood-${defaultIndex}`,
+      name: defaultNeighborhood,
+      coordinates: { lat: latitude, lng: longitude },
+      areas: [
+        {
+          id: `neighborhood-${defaultIndex}`,
+          name: defaultNeighborhood,
+          city: "Tel Aviv",
+          apartments: 0,
+        },
+      ],
+    };
   };
 
   // Function to detect area from address
@@ -191,6 +622,19 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
 
     try {
       const fullAddress = `${street} ${number}, Tel Aviv, Israel`;
+
+      // First validate if the address is real and in Tel Aviv
+      const validation = await validateTelAvivAddress(street, number);
+
+      if (!validation.isValid) {
+        Alert.alert(
+          "Invalid Address",
+          "The address you entered is not valid or not located in Tel Aviv. Please check and try again.",
+          [{ text: "OK" }]
+        );
+        setIsGeocoding(false);
+        return;
+      }
 
       // First try to detect neighborhood from address text
       const detectedNeighborhood = detectNeighborhoodFromAddress(fullAddress);
@@ -204,7 +648,10 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
           area: {
             id: `neighborhood-${neighborhoodIndex}`,
             name: detectedNeighborhood,
-            coordinates: { lat: 32.0853, lng: 34.7818 },
+            coordinates: validation.coordinates || {
+              lat: 32.0853,
+              lng: 34.7818,
+            },
             areas: [
               {
                 id: `neighborhood-${neighborhoodIndex}`,
@@ -214,6 +661,13 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
               },
             ],
           },
+          location: validation.coordinates
+            ? {
+                latitude: validation.coordinates.lat,
+                longitude: validation.coordinates.lng,
+                address: fullAddress,
+              }
+            : undefined,
         });
       } else {
         // Fallback to geocoding if neighborhood not detected from text
@@ -222,7 +676,7 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
         if (geocodeResult.length > 0) {
           const { latitude, longitude } = geocodeResult[0];
 
-          // Find the closest neighborhood
+          // Find the closest neighborhood using coordinate-based detection
           const detectedArea = findNeighborhoodFromCoordinates(
             latitude,
             longitude
@@ -242,6 +696,11 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
       }
     } catch (error) {
       console.log("Geocoding error:", error);
+      Alert.alert(
+        "Error",
+        "There was an error detecting the neighborhood. Please try again.",
+        [{ text: "OK" }]
+      );
     } finally {
       setIsGeocoding(false);
     }
@@ -249,15 +708,41 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
 
   const handleStreetChange = (street: string) => {
     onUpdate({ street });
-    if (street && data.streetNumber) {
-      detectAreaFromAddress(street, data.streetNumber);
+
+    // Generate suggestions based on input
+    if (street.length > 1) {
+      const suggestions = TEL_AVIV_STREETS.filter((streetName) =>
+        streetName.toLowerCase().includes(street.toLowerCase())
+      ).slice(0, 5); // Limit to 5 suggestions
+
+      setStreetSuggestions(suggestions);
+      setShowSuggestions(suggestions.length > 0);
+    } else {
+      setStreetSuggestions([]);
+      setShowSuggestions(false);
     }
   };
 
   const handleStreetNumberChange = (number: string) => {
     onUpdate({ streetNumber: number });
-    if (data.street && number) {
-      detectAreaFromAddress(data.street, number);
+  };
+
+  const handleStreetBlur = () => {
+    setShowSuggestions(false);
+    if (data.street && data.streetNumber) {
+      detectAreaFromAddress(data.street, data.streetNumber);
+    }
+  };
+
+  const handleSuggestionSelect = (suggestion: string) => {
+    onUpdate({ street: suggestion });
+    setShowSuggestions(false);
+    setStreetSuggestions([]);
+  };
+
+  const handleStreetNumberBlur = () => {
+    if (data.street && data.streetNumber) {
+      detectAreaFromAddress(data.street, data.streetNumber);
     }
   };
 
@@ -297,17 +782,35 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
           <View style={styles.inputRow}>
             <View style={styles.inputField}>
               <Text style={styles.fieldLabel}>Street Name</Text>
-              <TextInput
-                style={styles.textInput}
-                value={data.street}
-                onChangeText={handleStreetChange}
-                onFocus={() => setFocusedInput("street")}
-                onBlur={() => setFocusedInput(null)}
-                placeholder="Enter street name"
-                placeholderTextColor={colors.neutral[400]}
-                autoCapitalize="words"
-                autoCorrect={false}
-              />
+              <View style={styles.suggestionContainer}>
+                <TextInput
+                  style={styles.textInput}
+                  value={data.street}
+                  onChangeText={handleStreetChange}
+                  onFocus={() => setFocusedInput("street")}
+                  onBlur={() => {
+                    setFocusedInput(null);
+                    handleStreetBlur();
+                  }}
+                  placeholder="Enter street name"
+                  placeholderTextColor={colors.neutral[400]}
+                  autoCapitalize="words"
+                  autoCorrect={false}
+                />
+                {showSuggestions && streetSuggestions.length > 0 && (
+                  <View style={styles.suggestionsList}>
+                    {streetSuggestions.map((suggestion, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={styles.suggestionItem}
+                        onPress={() => handleSuggestionSelect(suggestion)}
+                      >
+                        <Text style={styles.suggestionText}>{suggestion}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+              </View>
             </View>
 
             <View style={styles.inputField}>
@@ -317,7 +820,10 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
                 value={data.streetNumber}
                 onChangeText={handleStreetNumberChange}
                 onFocus={() => setFocusedInput("number")}
-                onBlur={() => setFocusedInput(null)}
+                onBlur={() => {
+                  setFocusedInput(null);
+                  handleStreetNumberBlur();
+                }}
                 placeholder="Number"
                 placeholderTextColor={colors.neutral[400]}
                 keyboardType="numeric"
@@ -384,18 +890,6 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
             />
           </View>
 
-          {/* State */}
-          <View style={styles.inputField}>
-            <Text style={styles.fieldLabel}>State</Text>
-            <TextInput
-              style={styles.textInput}
-              value="Tel Aviv District"
-              placeholder="State"
-              placeholderTextColor={colors.neutral[400]}
-              editable={false}
-            />
-          </View>
-
           {/* Postcode */}
           <View style={styles.inputField}>
             <Text style={styles.fieldLabel}>Postal Code</Text>
@@ -412,15 +906,6 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
             />
           </View>
 
-          {/* Area Display */}
-          {data.area && (
-            <View style={styles.areaDisplay}>
-              <Text style={styles.areaText}>
-                Detected Area: {data.area.name}
-              </Text>
-            </View>
-          )}
-
           {isGeocoding && (
             <Animated.View
               style={[
@@ -428,33 +913,9 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
                 { transform: [{ scale: pulseAnim }] },
               ]}
             >
-              <Text style={styles.loadingText}>Detecting area...</Text>
+              <Text style={styles.loadingText}>Detecting neighborhood...</Text>
             </Animated.View>
           )}
-        </View>
-
-        {/* Location Privacy Section */}
-        <View style={styles.privacySection}>
-          <View style={styles.privacyHeader}>
-            <Text style={styles.privacyTitle}>Show your specific location</Text>
-            <TouchableOpacity style={styles.toggleSwitch}>
-              <View style={styles.toggleTrack}>
-                <View style={styles.toggleThumb} />
-              </View>
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.privacyDescription}>
-            Clearly indicate to guests the location of your accommodation. We
-            will only share your address after the reservation is confirmed.{" "}
-            <Text style={styles.learnMoreLink}>Learn more</Text>
-          </Text>
-        </View>
-
-        {/* Map Preview */}
-        <View style={styles.mapPreview}>
-          <Text style={styles.mapText}>
-            We will share your approximate location.
-          </Text>
         </View>
 
         {/* Shelter Section */}
@@ -850,5 +1311,34 @@ const styles = StyleSheet.create({
     paddingTop: spacing.lg,
     borderTopWidth: 1,
     borderTopColor: colors.neutral[200],
+  },
+
+  // Street Suggestions
+  suggestionContainer: {
+    position: "relative",
+    zIndex: 1,
+  },
+  suggestionsList: {
+    position: "absolute",
+    top: "100%",
+    left: 0,
+    right: 0,
+    backgroundColor: colors.neutral[0],
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.neutral[200],
+    maxHeight: 200,
+    zIndex: 10,
+    ...shadows.md,
+  },
+  suggestionItem: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.neutral[100],
+  },
+  suggestionText: {
+    ...textStyles.body,
+    color: colors.neutral[700],
   },
 });

@@ -106,13 +106,13 @@ export default function AddPropertyScreen({ navigation }: any) {
       totalRooms += 1;
     }
 
-    // Add only specific additional rooms that count towards total
-    const countableRooms = ["Kitchen", "Balcony", "Closet room", "Garden/Yard"];
-    const countableAdditionalRooms =
-      propertyData.additionalRooms?.filter((room) =>
-        countableRooms.includes(room)
-      ) || [];
-    totalRooms += countableAdditionalRooms.length;
+    // Additional rooms are no longer counted towards total room count
+    // const countableRooms = ["Closet room"];
+    // const countableAdditionalRooms =
+    //   propertyData.additionalRooms?.filter((room) =>
+    //     countableRooms.includes(room)
+    //   ) || [];
+    // totalRooms += countableAdditionalRooms.length;
 
     return totalRooms;
   };
@@ -154,7 +154,20 @@ export default function AddPropertyScreen({ navigation }: any) {
             propertyData.customBathrooms !== undefined)
         );
       case 3: // Amenities Step
-        return true; // Amenities are optional
+        // At least one required amenity must be selected
+        const requiredAmenityIds = [
+          "wifi",
+          "ac",
+          "elevator",
+          "furnished",
+          "pet_friendly",
+          "smoking_allowed",
+          "accessible",
+          "none",
+        ];
+        return propertyData.amenities.some((amenityId) =>
+          requiredAmenityIds.includes(amenityId)
+        );
       case 4: // Photos Step
         return propertyData.photos.length > 0;
       case 5: // Availability Step
