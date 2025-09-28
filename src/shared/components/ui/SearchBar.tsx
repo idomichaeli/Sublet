@@ -6,7 +6,12 @@ import {
   TouchableOpacity,
   Text,
 } from "react-native";
-import { colors, spacing, borderRadius, textStyles } from "../../../shared/constants/tokens";
+import {
+  colors,
+  spacing,
+  borderRadius,
+  textStyles,
+} from "../../../shared/constants/tokens";
 
 export interface SearchBarProps {
   placeholder?: string;
@@ -17,6 +22,7 @@ export interface SearchBarProps {
   onLocationPress?: () => void;
   showFilterButton?: boolean;
   showLocationButton?: boolean;
+  hasActiveFilters?: boolean;
   style?: any;
 }
 
@@ -29,6 +35,7 @@ export default function SearchBar({
   onLocationPress,
   showFilterButton = true,
   showLocationButton = false,
+  hasActiveFilters = false,
   style,
 }: SearchBarProps) {
   return (
@@ -58,8 +65,15 @@ export default function SearchBar({
       </View>
 
       {showFilterButton && (
-        <TouchableOpacity style={styles.filterButton} onPress={onFilterPress}>
+        <TouchableOpacity
+          style={[
+            styles.filterButton,
+            hasActiveFilters && styles.filterButtonActive,
+          ]}
+          onPress={onFilterPress}
+        >
           <Text style={styles.filterIcon}>⚙️</Text>
+          {hasActiveFilters && <View style={styles.filterIndicator} />}
         </TouchableOpacity>
       )}
     </View>
@@ -110,8 +124,21 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     alignItems: "center",
     justifyContent: "center",
+    position: "relative",
+  },
+  filterButtonActive: {
+    backgroundColor: colors.primary[600],
   },
   filterIcon: {
     fontSize: 18,
+  },
+  filterIndicator: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.error[500],
   },
 });

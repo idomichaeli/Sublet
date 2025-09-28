@@ -1,189 +1,94 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, FlatList, SafeAreaView } from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
-import { useRequestStore } from "../../shared/hooks/state/requestStore";
-import { useChatStore } from "../../shared/hooks/state/chatStore";
-import { useAuthStore } from "../../shared/hooks/state/authStore";
-import { useFavoritesStore } from "../../shared/hooks/state/favoritesStore";
-import { SwipeCardData } from "../swipe/components/SwipeCard";
-import { Request } from "../../shared/types/request";
-import ChatListItem from "./components/ChatListItem";
-import EmptyState from "../../shared/components/ui/EmptyState";
-import { colors, spacing, textStyles } from "../../shared/constants/tokens";
+import React from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  colors,
+  spacing,
+  textStyles,
+  borderRadius,
+} from "../../shared/constants/tokens";
 
 interface ChatItem {
   id: string;
-  propertyImage: string;
   propertyTitle: string;
-  location: string;
+  ownerName: string;
   lastMessage: string;
   timestamp: string;
   unreadCount: number;
-  chatId: string;
-  listing: SwipeCardData;
 }
 
+const mockChats: ChatItem[] = [
+  {
+    id: "1",
+    propertyTitle: "Modern Studio in Tel Aviv",
+    ownerName: "John Doe",
+    lastMessage: "Thanks for your interest! When would you like to visit?",
+    timestamp: "2 hours ago",
+    unreadCount: 2,
+  },
+  {
+    id: "2",
+    propertyTitle: "Cozy 2BR Apartment",
+    ownerName: "Jane Smith",
+    lastMessage: "The property is still available.",
+    timestamp: "1 day ago",
+    unreadCount: 0,
+  },
+];
+
 export default function ChatListScreen({ navigation }: any) {
-  const { user } = useAuthStore();
-  const { favorites } = useFavoritesStore();
-  const { getRequestByListing, refreshRequest } = useRequestStore();
-  const { messagesByPeer, load } = useChatStore();
-
-  const [chatItems, setChatItems] = useState<ChatItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Refresh data when screen comes into focus
-  useFocusEffect(
-    React.useCallback(() => {
-      loadChatItems();
-    }, [favorites, user])
-  );
-
-  const loadChatItems = async () => {
-    if (!user) return;
-
-    setIsLoading(true);
-    const items: ChatItem[] = [];
-
-    // Get all approved requests for user's favorites
-    for (const favorite of favorites) {
-      try {
-        // Refresh request data
-        await refreshRequest(favorite.id);
-        const request = getRequestByListing(favorite.id);
-
-        if (request && request.status === "ACCEPTED" && request.chatId) {
-          // Load chat messages
-          await load(request.chatId);
-          const messages = messagesByPeer[request.chatId] || [];
-
-          // Calculate unread count
-          const unreadCount = messages.filter(
-            (msg) =>
-              msg.toUserId === user.id &&
-              new Date(msg.sentAt) > new Date(request.updatedAt)
-          ).length;
-
-          // Get last message
-          const sortedMessages = messages.sort(
-            (a, b) =>
-              new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime()
-          );
-          const lastMessage =
-            sortedMessages.length > 0
-              ? sortedMessages[0].body
-              : "No messages yet";
-
-          // Format timestamp
-          const timestamp =
-            sortedMessages.length > 0
-              ? formatTimestamp(sortedMessages[0].sentAt)
-              : "Just now";
-
-          items.push({
-            id: request.id,
-            propertyImage: favorite.imageUrl,
-            propertyTitle: favorite.title,
-            location: favorite.location,
-            lastMessage,
-            timestamp,
-            unreadCount,
-            chatId: request.chatId,
-            listing: favorite,
-          });
-        }
-      } catch (error) {
-        console.error(`Failed to load chat for listing ${favorite.id}:`, error);
-      }
-    }
-
-    // Sort by last message time
-    items.sort((a, b) => {
-      const aTime = new Date(a.timestamp).getTime();
-      const bTime = new Date(b.timestamp).getTime();
-      return bTime - aTime;
-    });
-
-    setChatItems(items);
-    setIsLoading(false);
-  };
-
-  const formatTimestamp = (date: Date): string => {
-    const now = new Date();
-    const messageDate = new Date(date);
-    const diffInMinutes = Math.floor(
-      (now.getTime() - messageDate.getTime()) / (1000 * 60)
-    );
-
-    if (diffInMinutes < 1) return "Just now";
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
-    if (diffInMinutes < 10080)
-      return `${Math.floor(diffInMinutes / 1440)}d ago`;
-
-    return messageDate.toLocaleDateString();
-  };
-
-  const handleChatPress = (chatItem: ChatItem) => {
-    navigation.navigate("ChatDetail", {
-      chatId: chatItem.chatId,
-      listing: chatItem.listing,
-      propertyTitle: chatItem.propertyTitle,
-      propertyImage: chatItem.propertyImage,
-      location: chatItem.location,
-    });
-  };
-
   const renderChatItem = ({ item }: { item: ChatItem }) => (
-    <ChatListItem
-      propertyImage={item.propertyImage}
-      propertyTitle={item.propertyTitle}
-      location={item.location}
-      lastMessage={item.lastMessage}
-      timestamp={item.timestamp}
-      unreadCount={item.unreadCount}
-      onPress={() => handleChatPress(item)}
-    />
-  );
+    <TouchableOpacity
+      style={styles.chatItem}
+      onPress={() => navigation.navigate("ChatDetail", { chatId: item.id })}
+    >
+      <View style={styles.avatar}>
+        <Text style={styles.avatarText}>{item.ownerName[0]}</Text>
+      </View>
 
-  if (isLoading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Chats</Text>
-          <Text style={styles.headerSubtitle}>Loading conversations...</Text>
+      <View style={styles.chatContent}>
+        <View style={styles.chatHeader}>
+          <Text style={styles.propertyTitle} numberOfLines={1}>
+            {item.propertyTitle}
+          </Text>
+          <Text style={styles.timestamp}>{item.timestamp}</Text>
         </View>
-      </SafeAreaView>
-    );
-  }
+
+        <View style={styles.chatFooter}>
+          <Text style={styles.ownerName}>{item.ownerName}</Text>
+          {item.unreadCount > 0 && (
+            <View style={styles.unreadBadge}>
+              <Text style={styles.unreadText}>{item.unreadCount}</Text>
+            </View>
+          )}
+        </View>
+
+        <Text style={styles.lastMessage} numberOfLines={1}>
+          {item.lastMessage}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Chats</Text>
-        <Text style={styles.headerSubtitle}>
-          {chatItems.length} conversation{chatItems.length !== 1 ? "s" : ""}
-        </Text>
+        <Text style={styles.title}>Messages</Text>
       </View>
 
-      {chatItems.length > 0 ? (
-        <FlatList
-          data={chatItems}
-          renderItem={renderChatItem}
-          keyExtractor={(item) => item.id}
-          style={styles.chatList}
-          contentContainerStyle={styles.chatListContent}
-          showsVerticalScrollIndicator={false}
-        />
-      ) : (
-        <EmptyState
-          icon="💬"
-          title="No chats yet"
-          subtitle="Once an owner approves you, conversations will appear here."
-          actionLabel="Browse Properties"
-          onActionPress={() => navigation.navigate("Home")}
-        />
-      )}
+      <FlatList
+        data={mockChats}
+        renderItem={renderChatItem}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+      />
     </SafeAreaView>
   );
 }
@@ -197,22 +102,85 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     backgroundColor: colors.neutral[0],
     borderBottomWidth: 1,
-    borderBottomColor: colors.neutral[200],
+    borderBottomColor: colors.neutral[100],
   },
-  headerTitle: {
+  title: {
     ...textStyles.h2,
     color: colors.neutral[900],
-    marginBottom: spacing.xs,
   },
-  headerSubtitle: {
+  listContent: {
+    padding: spacing.md,
+  },
+  chatItem: {
+    flexDirection: "row",
+    backgroundColor: colors.neutral[0],
+    padding: spacing.md,
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.neutral[200],
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: colors.primary[500],
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: spacing.md,
+  },
+  avatarText: {
     ...textStyles.body,
-    color: colors.neutral[600],
+    color: colors.neutral[0],
+    fontWeight: "600",
   },
-  chatList: {
+  chatContent: {
     flex: 1,
   },
-  chatListContent: {
-    paddingVertical: spacing.md,
-    paddingBottom: 120, // Extra padding for floating nav bar
+  chatHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: spacing.xs,
+  },
+  propertyTitle: {
+    ...textStyles.body,
+    color: colors.neutral[900],
+    fontWeight: "600",
+    flex: 1,
+    marginRight: spacing.sm,
+  },
+  timestamp: {
+    ...textStyles.caption,
+    color: colors.neutral[600],
+  },
+  chatFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: spacing.xs,
+  },
+  ownerName: {
+    ...textStyles.caption,
+    color: colors.neutral[600],
+  },
+  unreadBadge: {
+    backgroundColor: colors.primary[500],
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: spacing.xs,
+  },
+  unreadText: {
+    ...textStyles.caption,
+    color: colors.neutral[0],
+    fontSize: 10,
+    fontWeight: "600",
+  },
+  lastMessage: {
+    ...textStyles.caption,
+    color: colors.neutral[700],
   },
 });

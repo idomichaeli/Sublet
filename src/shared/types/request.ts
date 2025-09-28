@@ -1,36 +1,25 @@
-export interface Request {
+export interface RentalRequest {
   id: string;
-  listingId: string;
+  propertyId: string;
   renterId: string;
   ownerId: string;
-  status: "PENDING" | "ACCEPTED" | "REJECTED" | "EXPIRED";
-  counterOffer?: {
-    type: "HIGHER" | "LOWER";
-    amount: number;
-    reason?: string;
-  };
-  preferredDates?: {
-    startDate: Date;
-    endDate: Date;
-  };
+  status: "pending" | "approved" | "rejected" | "cancelled";
   message?: string;
-  createdAt: Date;
-  updatedAt: Date;
-  chatId?: string; // Reference to chat conversation if accepted
+  requestedDates: {
+    checkIn: string;
+    checkOut: string;
+  };
+  guests: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface CreateRequestData {
-  listingId: string;
-  renterId: string;
-  ownerId: string;
-  counterOffer?: {
-    type: "HIGHER" | "LOWER";
-    amount: number;
-    reason?: string;
-  };
-  preferredDates?: {
-    startDate: Date;
-    endDate: Date;
-  };
+export interface CreateRentalRequestData {
+  propertyId: string;
   message?: string;
+  requestedDates: {
+    checkIn: string;
+    checkOut: string;
+  };
+  guests: number;
 }

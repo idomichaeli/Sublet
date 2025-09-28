@@ -1,38 +1,49 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { colors, spacing, textStyles, borderRadius } from "../../../shared/constants/tokens";
-import Button from "./Button";
+import {
+  colors,
+  spacing,
+  textStyles,
+  borderRadius,
+} from "../../constants/tokens";
 
-export interface EmptyStateProps {
+interface EmptyStateProps {
   icon: string;
   title: string;
   subtitle: string;
+  buttonText?: string;
+  onButtonPress?: () => void;
   actionLabel?: string;
   onActionPress?: () => void;
-  style?: any;
 }
 
 export default function EmptyState({
   icon,
   title,
   subtitle,
+  buttonText,
+  onButtonPress,
   actionLabel,
   onActionPress,
-  style,
 }: EmptyStateProps) {
   return (
-    <View style={[styles.container, style]}>
-      <Text style={styles.icon}>{icon}</Text>
+    <View style={styles.container}>
+      <View style={styles.iconContainer}>
+        <Text style={styles.icon}>{icon}</Text>
+      </View>
+
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.subtitle}>{subtitle}</Text>
 
+      {buttonText && onButtonPress && (
+        <TouchableOpacity style={styles.button} onPress={onButtonPress}>
+          <Text style={styles.buttonText}>{buttonText}</Text>
+        </TouchableOpacity>
+      )}
       {actionLabel && onActionPress && (
-        <Button
-          title={actionLabel}
-          onPress={onActionPress}
-          variant="primary"
-          style={styles.actionButton}
-        />
+        <TouchableOpacity style={styles.button} onPress={onActionPress}>
+          <Text style={styles.buttonText}>{actionLabel}</Text>
+        </TouchableOpacity>
       )}
     </View>
   );
@@ -40,28 +51,46 @@ export default function EmptyState({
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    justifyContent: "center",
     alignItems: "center",
-    paddingVertical: spacing["2xl"],
-    paddingHorizontal: spacing.xl,
+    padding: spacing.xl,
+  },
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.neutral[100],
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: spacing.lg,
   },
   icon: {
-    fontSize: 64,
-    marginBottom: spacing.lg,
+    fontSize: 32,
+    color: colors.neutral[400],
   },
   title: {
     ...textStyles.h3,
-    color: colors.neutral[700],
+    color: colors.neutral[900],
     marginBottom: spacing.sm,
     textAlign: "center",
   },
   subtitle: {
     ...textStyles.body,
-    color: colors.neutral[500],
+    color: colors.neutral[600],
     textAlign: "center",
-    marginBottom: spacing.xl,
     lineHeight: 24,
+    marginBottom: spacing.xl,
   },
-  actionButton: {
+  button: {
+    backgroundColor: colors.primary[500],
     paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.lg,
+  },
+  buttonText: {
+    ...textStyles.body,
+    color: colors.neutral[0],
+    fontWeight: "600",
   },
 });

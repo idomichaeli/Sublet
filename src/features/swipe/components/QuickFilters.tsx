@@ -1,17 +1,27 @@
 import React from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
-import { colors, spacing } from "../../../shared/constants/tokens";
-import Button from "../../../shared/components/ui/Button";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from "react-native";
+import {
+  colors,
+  spacing,
+  textStyles,
+  borderRadius,
+} from "../../../shared/constants/tokens";
 
-export interface FilterOption {
+interface Filter {
+  id: string;
   label: string;
-  value: string;
 }
 
 interface QuickFiltersProps {
-  filters: FilterOption[];
+  filters: Filter[];
   activeFilter: string;
-  onFilterChange: (filterValue: string) => void;
+  onFilterChange: (filterId: string) => void;
 }
 
 export default function QuickFilters({
@@ -20,38 +30,62 @@ export default function QuickFilters({
   onFilterChange,
 }: QuickFiltersProps) {
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      style={styles.filtersContainer}
-      contentContainerStyle={styles.filtersContent}
-    >
-      {filters.map((filter) => (
-        <Button
-          key={filter.value}
-          title={filter.label}
-          variant={activeFilter === filter.value ? "primary" : "secondary"}
-          size="sm"
-          style={styles.filterButton}
-          onPress={() => onFilterChange(filter.value)}
-        />
-      ))}
-    </ScrollView>
+    <View style={styles.container}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {filters.map((filter) => (
+          <TouchableOpacity
+            key={filter.id}
+            style={[
+              styles.filterChip,
+              activeFilter === filter.id && styles.filterChipActive,
+            ]}
+            onPress={() => onFilterChange(filter.id)}
+          >
+            <Text
+              style={[
+                styles.filterText,
+                activeFilter === filter.id && styles.filterTextActive,
+              ]}
+            >
+              {filter.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  filtersContainer: {
-    backgroundColor: colors.neutral[0],
-    borderBottomWidth: 1,
-    borderBottomColor: colors.neutral[100],
+  container: {
+    marginBottom: spacing.lg,
   },
-  filtersContent: {
+  scrollContent: {
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    gap: spacing.xs,
+    gap: spacing.sm,
   },
-  filterButton: {
-    marginRight: spacing.sm,
+  filterChip: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.neutral[100],
+    borderWidth: 1,
+    borderColor: colors.neutral[200],
+  },
+  filterChipActive: {
+    backgroundColor: colors.primary[500],
+    borderColor: colors.primary[500],
+  },
+  filterText: {
+    ...textStyles.body,
+    color: colors.neutral[700],
+    fontWeight: "500",
+  },
+  filterTextActive: {
+    color: colors.neutral[0],
   },
 });

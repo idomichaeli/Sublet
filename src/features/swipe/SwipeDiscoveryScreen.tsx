@@ -1,15 +1,23 @@
 import React, { useState } from "react";
-import { View, StyleSheet, SafeAreaView, StatusBar, Alert } from "react-native";
+import { View, StyleSheet, StatusBar } from "react-native";
 import { SwipeCardData } from "./components/SwipeCard";
 import SwipeStack from "./components/SwipeStack";
-import FloatingActionButtons from "./components/FloatingActionButtons";
-import ProgressIndicator from "./components/ProgressIndicator";
-import SwipeEmptyState from "./components/SwipeEmptyState";
-import { mockApartments } from "../../shared/data/mockApartments";
+import SwipeEmptyState from "./components/PropertySwipeEmptyState";
+import HomeHeader from "./components/HomeHeader";
+import { browserApartments } from "./data/browserData";
 import { colors, spacing } from "../../shared/constants/tokens";
 import { useFavoritesStore } from "../../shared/hooks/state/favoritesStore";
+import { useFilterStore } from "../../shared/hooks/state/filterStore";
 
-export default function SwipeDiscoveryScreen() {
+interface SwipeDiscoveryScreenProps {
+  onFilterPress?: () => void;
+  onViewModeChange?: (mode: "list" | "swipe") => void;
+}
+
+export default function SwipeDiscoveryScreen({
+  onFilterPress,
+  onViewModeChange,
+}: SwipeDiscoveryScreenProps) {
   const [apartments, setApartments] = useState<SwipeCardData[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [likedApartments, setLikedApartments] = useState<SwipeCardData[]>([]);
@@ -17,21 +25,92 @@ export default function SwipeDiscoveryScreen() {
   const [isEmpty, setIsEmpty] = useState(false);
 
   const { addFavorite, isFavorite } = useFavoritesStore();
+  const { appliedFilters } = useFilterStore();
 
-  // Filter out favorited apartments from mock data
+  // Filter out favorited apartments from mock data and apply filters
   React.useEffect(() => {
-    const filteredApartments = mockApartments.filter(
+    let filteredApartments = browserApartments.filter(
       (apartment) => !isFavorite(apartment.id)
     );
+
+    // Apply filters if any are set
+    if (Object.keys(appliedFilters).length > 0) {
+      filteredApartments = filteredApartments.filter((apartment) => {
+        // Bedrooms filter
+        if (
+          appliedFilters.bedrooms &&
+          apartment.rooms < appliedFilters.bedrooms
+        ) {
+          return false;
+        }
+
+        // Bathrooms filter
+        if (
+          appliedFilters.bathrooms &&
+          apartment.bathrooms < appliedFilters.bathrooms
+        ) {
+          return false;
+        }
+
+        // Living room filter
+        if (appliedFilters.hasLivingRoom !== undefined) {
+          const hasLivingRoom =
+            ["Living Room", "Kitchen", "Balcony"]?.includes("Living Room") ||
+            false;
+          if (appliedFilters.hasLivingRoom && !hasLivingRoom) {
+            return false;
+          }
+          if (appliedFilters.hasLivingRoom === false && hasLivingRoom) {
+            return false;
+          }
+        }
+
+        // Size filter
+        if (appliedFilters.minSize && apartment.size < appliedFilters.minSize) {
+          return false;
+        }
+        if (appliedFilters.maxSize && apartment.size > appliedFilters.maxSize) {
+          return false;
+        }
+
+        // Price filter
+        if (
+          appliedFilters.minPrice &&
+          apartment.price < appliedFilters.minPrice
+        ) {
+          return false;
+        }
+        if (
+          appliedFilters.maxPrice &&
+          apartment.price > appliedFilters.maxPrice
+        ) {
+          return false;
+        }
+
+        // Amenities filter
+        if (appliedFilters.amenities && appliedFilters.amenities.length > 0) {
+          const apartmentAmenities = ["WiFi", "Parking", "Pet Friendly"];
+          const hasAllRequiredAmenities = appliedFilters.amenities.every(
+            (amenity) => apartmentAmenities.includes(amenity)
+          );
+          if (!hasAllRequiredAmenities) {
+            return false;
+          }
+        }
+
+        return true;
+      });
+    }
+
     setApartments(filteredApartments);
-  }, [isFavorite]);
+  }, [isFavorite, appliedFilters]);
 
   const handleSwipeRight = (apartment: SwipeCardData) => {
     console.log("Liked apartment:", apartment.title);
     setLikedApartments((prev) => [...prev, apartment]);
 
     // Add to favorites store
-    addFavorite(apartment);
+    addFavorite(apartment.id);
 
     // Update the apartment as favorite
     setApartments((prev) =>
@@ -52,9 +131,68 @@ export default function SwipeDiscoveryScreen() {
 
   const handleReload = () => {
     // Reset the state and reload apartments (filtered)
-    const filteredApartments = mockApartments.filter(
+    let filteredApartments = browserApartments.filter(
       (apartment) => !isFavorite(apartment.id)
     );
+
+    // Reapply filters
+    if (Object.keys(appliedFilters).length > 0) {
+      filteredApartments = filteredApartments.filter((apartment) => {
+        // Apply the same filtering logic as in useEffect
+        if (
+          appliedFilters.bedrooms &&
+          apartment.rooms < appliedFilters.bedrooms
+        ) {
+          return false;
+        }
+        if (
+          appliedFilters.bathrooms &&
+          apartment.bathrooms < appliedFilters.bathrooms
+        ) {
+          return false;
+        }
+        if (appliedFilters.hasLivingRoom !== undefined) {
+          const hasLivingRoom =
+            ["Living Room", "Kitchen", "Balcony"]?.includes("Living Room") ||
+            false;
+          if (appliedFilters.hasLivingRoom && !hasLivingRoom) {
+            return false;
+          }
+          if (appliedFilters.hasLivingRoom === false && hasLivingRoom) {
+            return false;
+          }
+        }
+        if (appliedFilters.minSize && apartment.size < appliedFilters.minSize) {
+          return false;
+        }
+        if (appliedFilters.maxSize && apartment.size > appliedFilters.maxSize) {
+          return false;
+        }
+        if (
+          appliedFilters.minPrice &&
+          apartment.price < appliedFilters.minPrice
+        ) {
+          return false;
+        }
+        if (
+          appliedFilters.maxPrice &&
+          apartment.price > appliedFilters.maxPrice
+        ) {
+          return false;
+        }
+        if (appliedFilters.amenities && appliedFilters.amenities.length > 0) {
+          const apartmentAmenities = ["WiFi", "Parking", "Pet Friendly"];
+          const hasAllRequiredAmenities = appliedFilters.amenities.every(
+            (amenity) => apartmentAmenities.includes(amenity)
+          );
+          if (!hasAllRequiredAmenities) {
+            return false;
+          }
+        }
+        return true;
+      });
+    }
+
     setApartments(filteredApartments);
     setCurrentIndex(0);
     setLikedApartments([]);
@@ -63,11 +201,7 @@ export default function SwipeDiscoveryScreen() {
   };
 
   const handleChangeFilters = () => {
-    Alert.alert(
-      "Change Filters",
-      "Filter options would open here. For now, this is a placeholder.",
-      [{ text: "OK" }]
-    );
+    onFilterPress?.();
   };
 
   const handleUndo = () => {
@@ -98,11 +232,17 @@ export default function SwipeDiscoveryScreen() {
     }
   };
 
+  const handleSwipeUp = (apartment: SwipeCardData) => {
+    console.log("More info for apartment:", apartment.title);
+    // TODO: Navigate to apartment details screen
+    // navigation.navigate("ListingDetails", { listingId: apartment.id });
+  };
+
   const canUndo = likedApartments.length > 0 || passedApartments.length > 0;
 
   if (isEmpty) {
     return (
-      <SafeAreaView style={styles.container}>
+      <>
         <StatusBar
           barStyle="dark-content"
           backgroundColor={colors.neutral[50]}
@@ -111,16 +251,25 @@ export default function SwipeDiscoveryScreen() {
           onReload={handleReload}
           onChangeFilters={handleChangeFilters}
         />
-      </SafeAreaView>
+      </>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <>
       <StatusBar barStyle="dark-content" backgroundColor={colors.neutral[50]} />
 
+      {/* HomeHeader */}
+      <HomeHeader
+        viewMode="swipe"
+        onViewModeChange={onViewModeChange || (() => {})}
+        onFilterPress={onFilterPress}
+        hasActiveFilters={Object.keys(appliedFilters).length > 0}
+        remainingCount={apartments.length}
+      />
+
       {/* Progress Indicator */}
-      <ProgressIndicator current={currentIndex} total={apartments.length} />
+      {/* <ProgressIndicator current={currentIndex} total={apartments.length} /> */}
 
       {/* Swipe Stack */}
       <View style={styles.swipeContainer}>
@@ -128,19 +277,11 @@ export default function SwipeDiscoveryScreen() {
           data={apartments}
           onSwipeRight={handleSwipeRight}
           onSwipeLeft={handleSwipeLeft}
+          onSwipeUp={handleSwipeUp}
           onEmpty={handleEmpty}
         />
       </View>
-
-      {/* Floating Action Buttons */}
-      <FloatingActionButtons
-        onSwipeLeft={handleManualSwipeLeft}
-        onSwipeRight={handleManualSwipeRight}
-        onUndo={handleUndo}
-        canUndo={canUndo}
-        disabled={currentIndex >= apartments.length}
-      />
-    </SafeAreaView>
+    </>
   );
 }
 
@@ -153,5 +294,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    paddingBottom: 120, // Account for tab bar height (80px) + margin (16px) + extra spacing (24px)
   },
 });

@@ -1,27 +1,235 @@
 import React from "react";
-import { View, Text, Button, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  colors,
+  spacing,
+  textStyles,
+  borderRadius,
+} from "../../shared/constants/tokens";
+import { mockApartments } from "../../shared/data/mockApartments";
 
-export default function ListingDetailsScreen({ navigation, route }: any) {
-  const { listingId } = route.params || {};
+interface ListingDetailsScreenProps {
+  route: {
+    params: {
+      listingId: string;
+    };
+  };
+  navigation: any;
+}
+
+export default function ListingDetailsScreen({
+  route,
+  navigation,
+}: ListingDetailsScreenProps) {
+  const { listingId } = route.params;
+  const listing = mockApartments.find((apt) => apt.id === listingId);
+
+  if (!listing) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Listing not found</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Apartment Details</Text>
-      <Text>Listing ID: {listingId}</Text>
-      <View style={{ height: 8 }} />
-      <Button
-        title="Book Now"
-        onPress={() => navigation.navigate("Booking", { listingId })}
-      />
-    </View>
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.imageContainer}>
+          <Text style={styles.imagePlaceholder}>📷</Text>
+        </View>
+
+        <View style={styles.details}>
+          <Text style={styles.title}>{listing.title}</Text>
+          <Text style={styles.location}>📍 {listing.location}</Text>
+          <Text style={styles.price}>₪{listing.price}/month</Text>
+
+          <View style={styles.specs}>
+            <View style={styles.specItem}>
+              <Text style={styles.specIcon}>🛏️</Text>
+              <Text style={styles.specText}>{listing.rooms} bedrooms</Text>
+            </View>
+            <View style={styles.specItem}>
+              <Text style={styles.specIcon}>🚿</Text>
+              <Text style={styles.specText}>{listing.bathrooms} bathrooms</Text>
+            </View>
+            <View style={styles.specItem}>
+              <Text style={styles.specIcon}>📐</Text>
+              <Text style={styles.specText}>{listing.size}m²</Text>
+            </View>
+          </View>
+
+          <Text style={styles.description}>
+            Beautiful apartment in {listing.location}
+          </Text>
+
+          <View style={styles.amenities}>
+            <Text style={styles.sectionTitle}>Amenities</Text>
+            <View style={styles.amenityList}>
+              {["WiFi", "Parking", "Pet Friendly"].map((amenity, index) => (
+                <View key={index} style={styles.amenityChip}>
+                  <Text style={styles.amenityText}>{amenity}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+
+      <View style={styles.footer}>
+        <TouchableOpacity
+          style={styles.bookButton}
+          onPress={() => navigation.navigate("Booking", { listingId })}
+        >
+          <Text style={styles.bookButtonText}>Book Now</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 24,
+    backgroundColor: colors.neutral[50],
   },
-  title: { fontSize: 22, fontWeight: "600", marginBottom: 16 },
+  content: {
+    flex: 1,
+  },
+  header: {
+    padding: spacing.lg,
+    backgroundColor: colors.neutral[0],
+  },
+  backButton: {
+    alignSelf: "flex-start",
+  },
+  backButtonText: {
+    ...textStyles.body,
+    color: colors.primary[600],
+    fontWeight: "500",
+  },
+  imageContainer: {
+    height: 250,
+    backgroundColor: colors.neutral[100],
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  imagePlaceholder: {
+    fontSize: 48,
+    color: colors.neutral[400],
+  },
+  details: {
+    padding: spacing.lg,
+    backgroundColor: colors.neutral[0],
+    marginTop: spacing.md,
+  },
+  title: {
+    ...textStyles.h2,
+    color: colors.neutral[900],
+    marginBottom: spacing.sm,
+  },
+  location: {
+    ...textStyles.body,
+    color: colors.neutral[600],
+    marginBottom: spacing.sm,
+  },
+  price: {
+    ...textStyles.h3,
+    color: colors.primary[600],
+    fontWeight: "600",
+    marginBottom: spacing.lg,
+  },
+  specs: {
+    flexDirection: "row",
+    gap: spacing.lg,
+    marginBottom: spacing.lg,
+  },
+  specItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+  },
+  specIcon: {
+    fontSize: 16,
+  },
+  specText: {
+    ...textStyles.body,
+    color: colors.neutral[700],
+  },
+  description: {
+    ...textStyles.body,
+    color: colors.neutral[700],
+    lineHeight: 24,
+    marginBottom: spacing.lg,
+  },
+  sectionTitle: {
+    ...textStyles.h3,
+    color: colors.neutral[900],
+    marginBottom: spacing.md,
+  },
+  amenities: {
+    marginBottom: spacing.lg,
+  },
+  amenityList: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+  },
+  amenityChip: {
+    backgroundColor: colors.primary[50],
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+    borderWidth: 1,
+    borderColor: colors.primary[200],
+  },
+  amenityText: {
+    ...textStyles.caption,
+    color: colors.primary[700],
+    fontWeight: "500",
+  },
+  footer: {
+    padding: spacing.lg,
+    backgroundColor: colors.neutral[0],
+    borderTopWidth: 1,
+    borderTopColor: colors.neutral[200],
+  },
+  bookButton: {
+    backgroundColor: colors.primary[500],
+    paddingVertical: spacing.lg,
+    borderRadius: borderRadius.lg,
+    alignItems: "center",
+  },
+  bookButtonText: {
+    ...textStyles.body,
+    color: colors.neutral[0],
+    fontWeight: "600",
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorText: {
+    ...textStyles.h3,
+    color: colors.neutral[600],
+  },
 });

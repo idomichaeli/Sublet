@@ -1,34 +1,31 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { colors, spacing, textStyles } from "../../../shared/constants/tokens";
+import {
+  colors,
+  spacing,
+  textStyles,
+  borderRadius,
+} from "../../../shared/constants/tokens";
 
 interface ProgressIndicatorProps {
   current: number;
   total: number;
-  style?: any;
 }
 
 export default function ProgressIndicator({
   current,
   total,
-  style,
 }: ProgressIndicatorProps) {
   const progress = total > 0 ? (current / total) * 100 : 0;
-  const remaining = Math.max(0, total - current);
 
   return (
-    <View style={[styles.container, style]}>
-      {/* Progress Bar */}
-      <View style={styles.progressBarContainer}>
-        <View style={styles.progressBar}>
-          <View style={[styles.progressFill, { width: `${progress}%` }]} />
-        </View>
+    <View style={styles.container}>
+      <View style={styles.progressBar}>
+        <View style={[styles.progressFill, { width: `${progress}%` }]} />
       </View>
-
-      {/* Progress Text */}
-      <View style={styles.progressTextContainer}>
-        <Text style={styles.progressText}>{remaining} apartments left</Text>
-      </View>
+      <Text style={styles.progressText}>
+        {current} of {total} apartments
+      </Text>
     </View>
   );
 }
@@ -37,27 +34,25 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
-  },
-  progressBarContainer: {
-    marginBottom: spacing.sm,
+    backgroundColor: colors.neutral[0],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.neutral[100],
   },
   progressBar: {
     height: 4,
     backgroundColor: colors.neutral[200],
     borderRadius: 2,
     overflow: "hidden",
+    marginBottom: spacing.sm,
   },
   progressFill: {
     height: "100%",
     backgroundColor: colors.primary[500],
     borderRadius: 2,
   },
-  progressTextContainer: {
-    alignItems: "center",
-  },
   progressText: {
     ...textStyles.caption,
     color: colors.neutral[600],
-    fontSize: 12,
+    textAlign: "center",
   },
 });

@@ -2,23 +2,20 @@ import React from "react";
 import {
   View,
   Text,
-  Image,
   StyleSheet,
+  Image,
   TouchableOpacity,
   Dimensions,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import {
   colors,
   spacing,
   textStyles,
   borderRadius,
   shadows,
-  withOpacity,
 } from "../../../shared/constants/tokens";
-import { useFavoritesStore } from "../../../shared/hooks/state/favoritesStore";
 
-const { width, height } = Dimensions.get("window");
+const { width: screenWidth } = Dimensions.get("window");
 
 export interface SwipeCardData {
   id: string;
@@ -39,205 +36,242 @@ export interface SwipeCardData {
 
 interface SwipeCardProps {
   data: SwipeCardData;
+  onPress?: () => void;
   onFavoritePress?: () => void;
-  style?: any;
+  onMoreInfoPress?: () => void;
 }
 
 export default function SwipeCard({
   data,
+  onPress,
   onFavoritePress,
-  style,
+  onMoreInfoPress,
 }: SwipeCardProps) {
-  const { isFavorite, addFavorite, removeFavorite } = useFavoritesStore();
-  const isApartmentFavorite = isFavorite(data.id);
-
-  const handleFavoritePress = () => {
-    if (isApartmentFavorite) {
-      removeFavorite(data.id);
-    } else {
-      addFavorite(data);
-    }
-    onFavoritePress?.();
-  };
-
   return (
-    <View style={[styles.container, style]}>
+    <TouchableOpacity
+      style={styles.container}
+      onPress={onPress}
+      activeOpacity={0.9}
+    >
+      {/* Full Image Background */}
       <Image source={{ uri: data.imageUrl }} style={styles.image} />
 
-      {/* Gradient Overlay */}
-      <LinearGradient
-        colors={["transparent", withOpacity(colors.neutral[900], "70")]}
-        style={styles.gradientOverlay}
-      />
+      {/* Dark Overlay */}
+      <View style={styles.overlay} />
 
       {/* Favorite Button */}
-      <TouchableOpacity
-        style={styles.favoriteButton}
-        onPress={handleFavoritePress}
-        activeOpacity={0.7}
-      >
-        <Text style={styles.favoriteIcon}>
-          {isApartmentFavorite ? "❤️" : "🤍"}
-        </Text>
+      <TouchableOpacity style={styles.favoriteButton} onPress={onFavoritePress}>
+        <Text style={styles.favoriteIcon}>{data.isFavorite ? "❤️" : "🤍"}</Text>
       </TouchableOpacity>
 
       {/* Content Overlay */}
-      <View style={styles.contentOverlay}>
-        <View style={styles.contentContainer}>
-          <Text style={styles.title}>{data.title}</Text>
-
-          <View style={styles.priceContainer}>
-            <Text style={styles.price}>${data.price}</Text>
-            <Text style={styles.priceUnit}>/night</Text>
-          </View>
-
-          <View style={styles.locationContainer}>
-            <Text style={styles.locationIcon}>📍</Text>
-            <Text style={styles.location}>
-              {data.location}
-              {data.distance && `, ~${data.distance}`}
-            </Text>
-          </View>
-
-          {/* Property Details */}
-          <View style={styles.propertyDetailsContainer}>
-            <View style={styles.propertyDetail}>
-              <Text style={styles.propertyDetailText}>{data.size}m²</Text>
-            </View>
-            <View style={styles.propertyDetail}>
-              <Text style={styles.propertyDetailText}>
-                {data.rooms} <Text style={styles.propertyIcon}>🛏️</Text>
-              </Text>
-            </View>
-            <View style={styles.propertyDetail}>
-              <Text style={styles.propertyDetailText}>
-                {data.bathrooms} <Text style={styles.propertyIcon}>🛁</Text>
-              </Text>
-            </View>
-          </View>
-
-          {data.rating && (
-            <View style={styles.ratingContainer}>
-              <Text style={styles.rating}>⭐ {data.rating}</Text>
-            </View>
-          )}
+      <View style={styles.content}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.title} numberOfLines={1}>
+            {data.title}
+          </Text>
+          <Text style={styles.price}>₪{data.price}/month</Text>
         </View>
+
+        {/* Location */}
+        <Text style={styles.location} numberOfLines={1}>
+          📍 {data.location}
+        </Text>
+
+        {/* Details */}
+        <View style={styles.details}>
+          <View style={styles.detailItem}>
+            <Text style={styles.detailIcon}>🛏️</Text>
+            <Text style={styles.detailText}>{data.rooms}</Text>
+          </View>
+          <View style={styles.detailItem}>
+            <Text style={styles.detailIcon}>🚿</Text>
+            <Text style={styles.detailText}>{data.bathrooms}</Text>
+          </View>
+          <View style={styles.detailItem}>
+            <Text style={styles.detailIcon}>📐</Text>
+            <Text style={styles.detailText}>{data.size}m²</Text>
+          </View>
+        </View>
+
+        {/* Amenities */}
+        <View style={styles.amenities}>
+          {["WiFi", "Parking", "Pet Friendly"]
+            .slice(0, 3)
+            .map((amenity, index) => (
+              <View key={index} style={styles.amenityChip}>
+                <Text style={styles.amenityText}>{amenity}</Text>
+              </View>
+            ))}
+        </View>
+
+        {/* More Info Button */}
+        <TouchableOpacity
+          style={styles.moreInfoButton}
+          onPress={onMoreInfoPress}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.moreInfoText}>More Info</Text>
+          <Text style={styles.moreInfoIcon}>↑</Text>
+        </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    width: width * 0.9,
-    height: height * 0.7,
-    borderRadius: borderRadius.xl,
-    overflow: "hidden",
-    backgroundColor: colors.neutral[0],
+    width: screenWidth - spacing.sm * 2,
+    height: 600,
+    borderRadius: borderRadius.lg,
     ...shadows.lg,
+    overflow: "hidden",
+    position: "relative",
   },
   image: {
     width: "100%",
     height: "100%",
     resizeMode: "cover",
-  },
-  gradientOverlay: {
     position: "absolute",
-    bottom: 0,
+  },
+  overlay: {
+    position: "absolute",
+    top: 0,
     left: 0,
     right: 0,
-    height: "50%",
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.2)",
   },
   favoriteButton: {
     position: "absolute",
     top: spacing.md,
     right: spacing.md,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: withOpacity(colors.neutral[0], "90"),
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
     justifyContent: "center",
     alignItems: "center",
     ...shadows.md,
+    zIndex: 2,
   },
   favoriteIcon: {
     fontSize: 20,
   },
-  contentOverlay: {
+  content: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    padding: spacing.lg,
+    padding: spacing.xl,
+    paddingBottom: spacing.xl + spacing.md,
+    zIndex: 2,
   },
-  contentContainer: {
-    gap: spacing.xs,
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: spacing.sm,
   },
   title: {
     ...textStyles.h2,
     color: colors.neutral[0],
-    fontSize: 22,
-    fontWeight: "600",
-  },
-  priceContainer: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    gap: spacing.xs,
+    fontWeight: "800",
+    flex: 1,
+    marginRight: spacing.sm,
+    textShadowColor: "rgba(0, 0, 0, 0.8)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+    fontSize: 28,
   },
   price: {
     ...textStyles.h3,
-    color: colors.primary[500],
-    fontSize: 24,
+    color: colors.primary[300],
     fontWeight: "700",
+    textShadowColor: "rgba(0, 0, 0, 0.8)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+    fontSize: 24,
   },
-  priceUnit: {
-    ...textStyles.caption,
+  location: {
+    ...textStyles.body,
     color: colors.neutral[200],
-    fontSize: 14,
+    marginBottom: spacing.sm,
+    textShadowColor: "rgba(0, 0, 0, 0.8)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+    fontSize: 16,
   },
-  locationContainer: {
+  details: {
+    flexDirection: "row",
+    marginBottom: spacing.md,
+    gap: spacing.lg,
+  },
+  detailItem: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.xs,
   },
-  locationIcon: {
-    fontSize: 14,
-  },
-  location: {
-    ...textStyles.caption,
-    color: colors.neutral[200],
-    fontSize: 14,
-    flex: 1,
-  },
-  propertyDetailsContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-    marginTop: spacing.xs,
-  },
-  propertyDetail: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: withOpacity(colors.neutral[0], "20"),
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
-  },
-  propertyDetailText: {
-    ...textStyles.caption,
-    color: colors.neutral[0],
-    fontSize: 12,
-    fontWeight: "500",
-  },
-  propertyIcon: {
+  detailIcon: {
     fontSize: 16,
   },
-  ratingContainer: {
-    marginTop: spacing.xs,
-  },
-  rating: {
-    ...textStyles.caption,
+  detailText: {
+    ...textStyles.body,
     color: colors.neutral[200],
+    fontWeight: "500",
+    textShadowColor: "rgba(0, 0, 0, 0.8)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
     fontSize: 14,
+  },
+  amenities: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  amenityChip: {
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.2)",
+  },
+  amenityText: {
+    ...textStyles.caption,
+    color: colors.neutral[0],
+    fontWeight: "600",
+    fontSize: 12,
+  },
+  description: {
+    ...textStyles.body,
+    color: colors.neutral[600],
+    lineHeight: 20,
+  },
+  moreInfoButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.xl,
+    borderRadius: borderRadius.lg,
+    marginTop: spacing.lg,
+    gap: spacing.sm,
+    ...shadows.md,
+  },
+  moreInfoText: {
+    ...textStyles.body,
+    color: colors.primary[600],
+    fontWeight: "700",
+    fontSize: 16,
+  },
+  moreInfoIcon: {
+    ...textStyles.body,
+    color: colors.primary[600],
+    fontWeight: "700",
+    fontSize: 18,
   },
 });

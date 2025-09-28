@@ -1,10 +1,18 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import Svg, {
+  Path,
+  Defs,
+  LinearGradient,
+  Stop,
+  Text as SvgText,
+} from "react-native-svg";
 import {
   colors,
   spacing,
   textStyles,
   borderRadius,
+  shadows,
 } from "../../../shared/constants/tokens";
 
 type ViewMode = "list" | "swipe";
@@ -12,53 +20,69 @@ type ViewMode = "list" | "swipe";
 interface HomeHeaderProps {
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
+  onFilterPress?: () => void;
+  hasActiveFilters?: boolean;
+  remainingCount?: number;
 }
 
 export default function HomeHeader({
   viewMode,
   onViewModeChange,
+  onFilterPress,
+  hasActiveFilters = false,
+  remainingCount,
 }: HomeHeaderProps) {
   return (
     <View style={styles.header}>
       <View style={styles.headerTop}>
-        <View>
-          <Text style={styles.greeting}>Good morning! 👋</Text>
-          <Text style={styles.subtitle}>Find your perfect place to stay</Text>
-        </View>
-        <View style={styles.viewModeToggle}>
-          <TouchableOpacity
-            style={[
-              styles.toggleButton,
-              viewMode === "swipe" && styles.toggleButtonActive,
-            ]}
-            onPress={() => onViewModeChange("swipe")}
-          >
-            <Text
-              style={[
-                styles.toggleText,
-                viewMode === "swipe" && styles.toggleTextActive,
-              ]}
+        {/* Left: Discover title with gradient */}
+        <View style={styles.titleContainer}>
+          <Svg width="120" height="32" viewBox="0 0 120 32">
+            <Defs>
+              <LinearGradient
+                id="titleGradient"
+                x1="0%"
+                y1="0%"
+                x2="100%"
+                y2="0%"
+              >
+                <Stop offset="0%" stopColor="#4CAF50" />
+                <Stop offset="100%" stopColor="#FF9800" />
+              </LinearGradient>
+            </Defs>
+            <SvgText
+              x="0"
+              y="24"
+              fontSize="24"
+              fontWeight="700"
+              fontFamily="System"
+              fill="url(#titleGradient)"
             >
-              Swipe
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.toggleButton,
-              viewMode === "list" && styles.toggleButtonActive,
-            ]}
-            onPress={() => onViewModeChange("list")}
-          >
-            <Text
-              style={[
-                styles.toggleText,
-                viewMode === "list" && styles.toggleTextActive,
-              ]}
-            >
-              List
-            </Text>
-          </TouchableOpacity>
+              Discover
+            </SvgText>
+          </Svg>
         </View>
+
+        {/* Center: Count */}
+        {remainingCount !== undefined && (
+          <Text style={styles.countText}>{remainingCount} left</Text>
+        )}
+
+        {/* Right: Filter button */}
+        {onFilterPress && (
+          <TouchableOpacity style={styles.filterButton} onPress={onFilterPress}>
+            <Svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <Path
+                d="M3 7h18M6 12h12M9 17h6"
+                stroke="black"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
+            {hasActiveFilters && <View style={styles.filterIndicator} />}
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -66,46 +90,45 @@ export default function HomeHeader({
 
 const styles = StyleSheet.create({
   header: {
-    padding: spacing.md,
-    paddingTop: spacing.lg,
-    backgroundColor: colors.neutral[0],
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.neutral[50],
     borderBottomWidth: 1,
     borderBottomColor: colors.neutral[100],
   },
   headerTop: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
+    alignItems: "center",
   },
-  greeting: {
-    ...textStyles.h2,
-    color: colors.neutral[900],
-    marginBottom: spacing.xs,
+  titleContainer: {
+    alignItems: "center",
+    justifyContent: "center",
   },
-  subtitle: {
+  countText: {
     ...textStyles.body,
     color: colors.neutral[600],
-  },
-  viewModeToggle: {
-    flexDirection: "row",
-    backgroundColor: colors.neutral[100],
-    borderRadius: borderRadius.md,
-    padding: spacing.xs,
-  },
-  toggleButton: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.sm,
-  },
-  toggleButtonActive: {
-    backgroundColor: colors.primary[500],
-  },
-  toggleText: {
-    ...textStyles.caption,
-    color: colors.neutral[600],
+    fontSize: 16,
     fontWeight: "500",
   },
-  toggleTextActive: {
-    color: colors.neutral[0],
+  filterButton: {
+    backgroundColor: colors.neutral[0],
+    borderRadius: borderRadius.md,
+    padding: spacing.sm,
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+    width: 40,
+    height: 40,
+    ...shadows.sm,
+  },
+  filterIndicator: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.error[500],
   },
 });

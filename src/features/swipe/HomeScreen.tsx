@@ -9,17 +9,22 @@ import HomeHeader from "./components/HomeHeader";
 import HeroCarousel from "./components/HeroCarousel";
 import QuickFilters from "./components/QuickFilters";
 import ListingsSection from "./components/ListingsSection";
-import { mockListings, heroData, quickFilters } from "./data/mockData";
+import FilterBottomSheet from "./components/FilterBottomSheet";
+import { browserListings, heroData, quickFilters } from "./data/browserData";
+import { FilterData } from "./types/FilterData";
+import { useFilterStore } from "../../shared/hooks/state/filterStore";
 
 type ViewMode = "list" | "swipe";
 
 export default function HomeScreen({ navigation }: any) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [listings, setListings] = useState(mockListings);
+  const [listings, setListings] = useState(browserListings);
   const [activeFilter, setActiveFilter] = useState("All");
   const [viewMode, setViewMode] = useState<ViewMode>("swipe");
+  const [showFilterSheet, setShowFilterSheet] = useState(false);
 
   const { isFavorite } = useFavoritesStore();
+  const { appliedFilters, setAppliedFilters } = useFilterStore();
 
   // Filter out favorited apartments from the listings
   const filteredListings = listings.filter(
@@ -32,8 +37,13 @@ export default function HomeScreen({ navigation }: any) {
   };
 
   const handleFilter = () => {
-    // Implement filter logic
-    console.log("Opening filters");
+    setShowFilterSheet(true);
+  };
+
+  const handleApplyFilters = (filters: FilterData) => {
+    setAppliedFilters(filters);
+    console.log("Applied filters:", filters);
+    // TODO: Implement actual filtering logic
   };
 
   const handleLocationPress = () => {
@@ -66,19 +76,40 @@ export default function HomeScreen({ navigation }: any) {
 
   // If swipe mode is selected, render the swipe discovery screen
   if (viewMode === "swipe") {
-    return <SwipeDiscoveryScreen />;
+    return (
+      <>
+        <SwipeDiscoveryScreen onFilterPress={handleFilter} />
+        <FilterBottomSheet
+          visible={showFilterSheet}
+          onClose={() => setShowFilterSheet(false)}
+          onApply={handleApplyFilters}
+          initialFilters={appliedFilters}
+        />
+      </>
+    );
   }
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <ScrollView
+      {/* <ScrollView
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        <HomeHeader viewMode={viewMode} onViewModeChange={setViewMode} />
+        <HomeHeader
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          onFilterPress={handleFilter}
+          hasActiveFilters={Object.keys(appliedFilters).length > 0}
+        />
 
-        {/* Search Bar */}
+        <ListingsSection
+          listings={filteredListings}
+          onListingPress={handleListingPress}
+          onBookPress={handleBookPress}
+          onFavoritePress={handleFavoritePress}
+        />
+
         <View style={styles.searchContainer}>
           <SearchBar
             placeholder="Search by city, address, or ZIP"
@@ -88,24 +119,23 @@ export default function HomeScreen({ navigation }: any) {
             onFilterPress={handleFilter}
             onLocationPress={handleLocationPress}
             showLocationButton
+            hasActiveFilters={Object.keys(appliedFilters).length > 0}
           />
         </View>
-
-        <HeroCarousel data={heroData} onHeroPress={handleHeroPress} />
 
         <QuickFilters
           filters={quickFilters}
           activeFilter={activeFilter}
           onFilterChange={setActiveFilter}
         />
-
-        <ListingsSection
-          listings={filteredListings}
-          onListingPress={handleListingPress}
-          onBookPress={handleBookPress}
-          onFavoritePress={handleFavoritePress}
-        />
       </ScrollView>
+
+      <FilterBottomSheet
+        visible={showFilterSheet}
+        onClose={() => setShowFilterSheet(false)}
+        onApply={handleApplyFilters}
+        initialFilters={appliedFilters}
+      /> */}
     </SafeAreaView>
   );
 }

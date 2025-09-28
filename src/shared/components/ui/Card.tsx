@@ -1,41 +1,30 @@
 import React from "react";
 import { View, StyleSheet, ViewStyle } from "react-native";
-import { colors, spacing, borderRadius, shadows } from "../../../shared/constants/tokens";
+import { colors, spacing, borderRadius, shadows } from "../../constants/tokens";
 
-export interface CardProps {
+interface CardProps {
   children: React.ReactNode;
   style?: ViewStyle;
-  padding?: keyof typeof spacing;
-  shadow?: keyof typeof shadows;
-  backgroundColor?: string;
+  padding?: number;
+  shadow?: boolean;
 }
 
 export default function Card({
   children,
   style,
-  padding = "md",
-  shadow = "md",
-  backgroundColor = colors.neutral[0],
+  padding = spacing.md,
+  shadow = true,
 }: CardProps) {
   return (
-    <View
-      style={[
-        styles.base,
-        {
-          padding: spacing[padding],
-          backgroundColor,
-        },
-        shadows[shadow],
-        style,
-      ]}
-    >
+    <View style={[styles.container, { padding }, shadow && shadows.md, style]}>
       {children}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  base: {
+  container: {
+    backgroundColor: colors.neutral[0],
     borderRadius: borderRadius.lg,
     borderWidth: 1,
     borderColor: colors.neutral[200],

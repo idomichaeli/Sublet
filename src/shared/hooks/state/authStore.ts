@@ -1,39 +1,50 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import { UserRole, User } from "../../types/user";
+import { UserRole } from "../../types/user";
 
-type AuthState = {
+interface AuthStore {
   isAuthenticated: boolean;
-  token: string | null;
-  user: User | null;
-  role: UserRole | null;
-  login: (payload: { token: string; user: User }) => void;
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    role: UserRole;
+  } | null;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => void;
-  setRole: (role: UserRole) => void;
-};
+  register: (email: string, password: string, name: string, role: UserRole) => Promise<void>;
+}
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
+export const useAuthStore = create<AuthStore>((set) => ({
+  isAuthenticated: false,
+  user: null,
+  login: async (email, password) => {
+    // Mock login - replace with actual API call
+    set({
+      isAuthenticated: true,
+      user: {
+        id: "1",
+        email,
+        name: "Test User",
+        role: "RENTER" as UserRole,
+      },
+    });
+  },
+  logout: () => {
+    set({
       isAuthenticated: false,
-      token: null,
       user: null,
-      role: null,
-      login: ({ token, user }) =>
-        set({ isAuthenticated: true, token, user, role: user.role }),
-      logout: () => set({ isAuthenticated: false, token: null, user: null, role: null }),
-      setRole: (role) => set({ role }),
-    }),
-    {
-      name: "auth-storage",
-      partialize: (state) => ({ 
-        isAuthenticated: state.isAuthenticated,
-        token: state.token,
-        user: state.user,
-        role: state.role 
-      }),
-    }
-  )
-);
-
-
+    });
+  },
+  register: async (email, password, name, role) => {
+    // Mock registration - replace with actual API call
+    set({
+      isAuthenticated: true,
+      user: {
+        id: "1",
+        email,
+        name,
+        role,
+      },
+    });
+  },
+}));

@@ -60,7 +60,10 @@ export default function DatePicker({
   }, [value]);
 
   const formatDate = (date: Date) => {
-    return date.toISOString().split("T")[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   };
 
   const parseDate = (dateString: string) => {
@@ -79,7 +82,10 @@ export default function DatePicker({
     const dateString = formatDate(date);
     const today = formatDate(new Date());
 
+    // Disable dates before today (for booking purposes)
     if (dateString < today) return true;
+
+    // Disable dates outside the available range
     if (minDate && dateString < minDate) return true;
     if (maxDate && dateString > maxDate) return true;
     return false;

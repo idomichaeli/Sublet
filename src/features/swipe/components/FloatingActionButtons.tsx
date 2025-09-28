@@ -6,22 +6,31 @@ import {
   StyleSheet,
   Vibration,
 } from "react-native";
-import { colors, spacing, borderRadius, shadows } from "../../../shared/constants/tokens";
+import {
+  colors,
+  spacing,
+  borderRadius,
+  shadows,
+} from "../../../shared/constants/tokens";
 
 interface FloatingActionButtonsProps {
   onSwipeLeft: () => void;
   onSwipeRight: () => void;
   onUndo?: () => void;
+  onFilterPress?: () => void;
   canUndo?: boolean;
   disabled?: boolean;
+  hasActiveFilters?: boolean;
 }
 
 export default function FloatingActionButtons({
   onSwipeLeft,
   onSwipeRight,
   onUndo,
+  onFilterPress,
   canUndo = false,
   disabled = false,
+  hasActiveFilters = false,
 }: FloatingActionButtonsProps) {
   const handleSwipeLeft = () => {
     if (disabled) return;
@@ -52,6 +61,23 @@ export default function FloatingActionButtons({
           disabled={disabled}
         >
           <Text style={styles.undoIcon}>↶</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* Filter Button */}
+      {onFilterPress && (
+        <TouchableOpacity
+          style={[
+            styles.filterButton,
+            hasActiveFilters && styles.filterButtonActive,
+            disabled && styles.disabledButton,
+          ]}
+          onPress={onFilterPress}
+          activeOpacity={0.7}
+          disabled={disabled}
+        >
+          <Text style={styles.filterIcon}>⚙️</Text>
+          {hasActiveFilters && <View style={styles.filterIndicator} />}
         </TouchableOpacity>
       )}
 
@@ -92,7 +118,7 @@ export default function FloatingActionButtons({
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
-    bottom: spacing["2xl"],
+    bottom: 120, // Account for tab bar height (80px) + margin (16px) + extra spacing (24px)
     left: 0,
     right: 0,
     flexDirection: "row",
@@ -129,6 +155,32 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     ...shadows.md,
+  },
+  filterButton: {
+    position: "absolute",
+    right: spacing.lg,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: colors.primary[500],
+    justifyContent: "center",
+    alignItems: "center",
+    ...shadows.md,
+  },
+  filterButtonActive: {
+    backgroundColor: colors.primary[600],
+  },
+  filterIcon: {
+    fontSize: 20,
+  },
+  filterIndicator: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.error[500],
   },
   passIcon: {
     fontSize: 24,

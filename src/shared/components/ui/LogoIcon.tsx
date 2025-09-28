@@ -10,7 +10,7 @@ interface LogoIconProps {
 const LogoIcon: React.FC<LogoIconProps> = ({ size = 32, color }) => {
   return (
     <Image
-      source={require("../../../assets/icon.png")}
+      source={require("../../../app/assets/icon.png")}
       style={{ width: size, height: size }}
       resizeMode="contain"
     />

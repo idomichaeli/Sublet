@@ -172,7 +172,7 @@ export default function DateRangePicker({
         isInRange && !isSelected && styles.rangeDay,
         isStartDate && styles.startDate,
         isEndDate && styles.endDate,
-      ];
+      ] as any;
 
       days.push(
         <TouchableOpacity

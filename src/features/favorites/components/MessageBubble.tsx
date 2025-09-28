@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { View, Text, StyleSheet, Animated } from "react-native";
+import { View, Text, StyleSheet, Animated, Image } from "react-native";
 import {
   colors,
   spacing,
@@ -15,6 +15,9 @@ interface MessageBubbleProps {
   timestamp: string;
   isLast?: boolean;
   isNew?: boolean;
+  imageUrl?: string;
+  isTyping?: boolean;
+  style?: any;
 }
 
 export default function MessageBubble({
@@ -23,6 +26,9 @@ export default function MessageBubble({
   timestamp,
   isLast = false,
   isNew = false,
+  imageUrl,
+  isTyping = false,
+  style,
 }: MessageBubbleProps) {
   const scaleAnim = useRef(new Animated.Value(isNew ? 0.3 : 1)).current;
   const opacityAnim = useRef(new Animated.Value(isNew ? 0 : 1)).current;
@@ -50,6 +56,7 @@ export default function MessageBubble({
       style={[
         styles.container,
         isOwner ? styles.ownerContainer : styles.renterContainer,
+        style,
       ]}
     >
       <Animated.View
@@ -64,14 +71,36 @@ export default function MessageBubble({
           },
         ]}
       >
-        <Text
-          style={[
-            styles.messageText,
-            isOwner ? styles.ownerText : styles.renterText,
-          ]}
-        >
-          {message}
-        </Text>
+        {imageUrl && (
+          <Image source={{ uri: imageUrl }} style={styles.messageImage} />
+        )}
+
+        {isTyping ? (
+          <View style={styles.typingContainer}>
+            <Text
+              style={[
+                styles.typingText,
+                isOwner ? styles.ownerText : styles.renterText,
+              ]}
+            >
+              typing...
+            </Text>
+            <View style={styles.typingDots}>
+              <View style={[styles.dot, styles.dot1]} />
+              <View style={[styles.dot, styles.dot2]} />
+              <View style={[styles.dot, styles.dot3]} />
+            </View>
+          </View>
+        ) : (
+          <Text
+            style={[
+              styles.messageText,
+              isOwner ? styles.ownerText : styles.renterText,
+            ]}
+          >
+            {message}
+          </Text>
+        )}
         <Text
           style={[
             styles.timestamp,
@@ -139,5 +168,39 @@ const styles = StyleSheet.create({
   },
   renterTimestamp: {
     color: withOpacity(colors.neutral[0], "70"),
+  },
+  messageImage: {
+    width: 200,
+    height: 150,
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing.sm,
+  },
+  typingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  typingText: {
+    ...textStyles.body,
+    fontStyle: "italic",
+    marginRight: spacing.xs,
+  },
+  typingDots: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    marginHorizontal: 1,
+  },
+  dot1: {
+    backgroundColor: colors.neutral[400],
+  },
+  dot2: {
+    backgroundColor: colors.neutral[500],
+  },
+  dot3: {
+    backgroundColor: colors.neutral[600],
   },
 });

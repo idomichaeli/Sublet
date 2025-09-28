@@ -1,50 +1,58 @@
 import React from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
-import { TelAvivLocation } from "../../constants/locations";
-import { SwipeCardData } from "../../../features/swipe/components/SwipeCard";
-import { colors, spacing } from "../../constants/tokens";
-import AreaStoriesHeader from "../../../features/favorites/components/AreaStoriesHeader";
-import AreaStoryCard, {
-  AreaStory,
-} from "../../../features/favorites/components/AreaStoryCard";
-import { getAreaStories } from "../../../features/favorites/utils/areaUtils";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from "react-native";
+import {
+  colors,
+  spacing,
+  textStyles,
+  borderRadius,
+} from "../../constants/tokens";
 
-const STORY_HEIGHT = 140;
+interface AreaStory {
+  id: string;
+  title: string;
+  image: string;
+  apartments: number;
+}
 
 interface AreaStoriesProps {
-  favorites: SwipeCardData[];
-  onAreaPress?: (area: TelAvivLocation) => void;
-  selectedArea?: TelAvivLocation | null;
+  stories: AreaStory[];
+  onStoryPress?: (storyId: string) => void;
 }
 
 export default function AreaStories({
-  favorites,
-  onAreaPress,
-  selectedArea,
+  stories,
+  onStoryPress,
 }: AreaStoriesProps) {
-  const areaStories = getAreaStories(favorites);
-
-  if (areaStories.length === 0) {
-    return null;
-  }
-
   return (
     <View style={styles.container}>
-      <AreaStoriesHeader areaCount={areaStories.length} />
-
+      <Text style={styles.title}>Area Stories</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.storiesContainer}
-        style={styles.storiesScroll}
+        contentContainerStyle={styles.scrollContent}
       >
-        {areaStories.map((areaStory: AreaStory) => (
-          <AreaStoryCard
-            key={areaStory.location.id}
-            areaStory={areaStory}
-            onAreaPress={onAreaPress}
-            isSelected={selectedArea?.id === areaStory.location.id}
-          />
+        {stories.map((story) => (
+          <TouchableOpacity
+            key={story.id}
+            style={styles.storyCard}
+            onPress={() => onStoryPress?.(story.id)}
+          >
+            <View style={styles.imageContainer}>
+              <Text style={styles.imagePlaceholder}>🏘️</Text>
+            </View>
+            <Text style={styles.storyTitle} numberOfLines={1}>
+              {story.title}
+            </Text>
+            <Text style={styles.apartmentCount}>
+              {story.apartments} apartments
+            </Text>
+          </TouchableOpacity>
         ))}
       </ScrollView>
     </View>
@@ -53,16 +61,48 @@ export default function AreaStories({
 
 const styles = StyleSheet.create({
   container: {
+    marginBottom: spacing.lg,
+  },
+  title: {
+    ...textStyles.h3,
+    color: colors.neutral[900],
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.md,
+    fontWeight: "600",
+  },
+  scrollContent: {
+    paddingHorizontal: spacing.md,
+    gap: spacing.md,
+  },
+  storyCard: {
+    width: 120,
     backgroundColor: colors.neutral[0],
-    paddingBottom: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.neutral[200],
+    borderRadius: borderRadius.lg,
+    padding: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.neutral[200],
   },
-  storiesContainer: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.sm,
+  imageContainer: {
+    height: 80,
+    backgroundColor: colors.neutral[100],
+    borderRadius: borderRadius.md,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: spacing.sm,
   },
-  storiesScroll: {
-    maxHeight: STORY_HEIGHT + 20,
+  imagePlaceholder: {
+    fontSize: 24,
+    color: colors.neutral[400],
+  },
+  storyTitle: {
+    ...textStyles.caption,
+    color: colors.neutral[900],
+    fontWeight: "500",
+    marginBottom: spacing.xs,
+  },
+  apartmentCount: {
+    ...textStyles.caption,
+    color: colors.neutral[600],
+    fontSize: 10,
   },
 });
