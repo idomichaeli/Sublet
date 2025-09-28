@@ -168,8 +168,8 @@ export default function AddPropertyScreen({ navigation }: any) {
     }
   };
 
-  const saveDraft = () => {
-    const result = propertyManager.saveDraft();
+  const saveDraft = async () => {
+    const result = await propertyManager.saveDraft();
     if (result.success) {
       Alert.alert(
         "Draft Saved",
@@ -185,8 +185,8 @@ export default function AddPropertyScreen({ navigation }: any) {
     }
   };
 
-  const publishProperty = () => {
-    const result = propertyManager.publishProperty();
+  const publishProperty = async () => {
+    const result = await propertyManager.publishProperty();
     if (result.success) {
       Alert.alert(
         "Property Published!",
@@ -204,6 +204,67 @@ export default function AddPropertyScreen({ navigation }: any) {
         result.errors?.join(", ") || "Failed to publish property",
         [{ text: "OK" }]
       );
+    }
+  };
+
+  // Temporary function to simulate a new property with example data
+  const simulateNewProperty = async () => {
+    try {
+      // Initialize new property
+      propertyManager.initializeNewProperty();
+
+      // Fill with example data
+      const exampleProperty: Partial<PropertyObject> = {
+        // Property Category
+        propertyCategory: "apartment",
+        propertyType: "entire_place",
+
+        // Location
+        street: "Dizengoff",
+        streetNumber: "123",
+        floor: "3",
+        apartmentNumber: "A",
+        postcode: "64332",
+        hasShelter: true,
+        shelterLocation: "in_apartment",
+
+        // Basic Details
+        bedrooms: 2,
+        bathrooms: 1,
+        size: 75,
+        renovation: "renovated",
+        additionalRooms: ["balcony"],
+
+        // Amenities
+        amenities: ["wifi", "ac", "furnished", "elevator", "parking"],
+
+        // Photos
+        photos: [
+          "https://example.com/photo1.jpg",
+          "https://example.com/photo2.jpg",
+        ],
+
+        // Availability
+        availableFrom: "2024-02-01",
+        availableTo: "2024-12-31",
+        startDateFlexibility: "1week",
+        endDateFlexibility: "2weeks",
+
+        // Pricing
+        price: 3500,
+        pricingFrequency: "month",
+      };
+
+      // Update property with example data
+      propertyManager.updateProperty(exampleProperty);
+
+      Alert.alert(
+        "Property Simulated!",
+        "Example property data has been loaded. You can now save as draft or publish.",
+        [{ text: "OK" }]
+      );
+    } catch (error) {
+      Alert.alert("Error", "Failed to simulate property: " + error);
     }
   };
 
@@ -247,6 +308,16 @@ export default function AddPropertyScreen({ navigation }: any) {
         <Text style={styles.headerTitle}>Add New Property</Text>
         <TouchableOpacity style={styles.draftButton} onPress={saveDraft}>
           <Text style={styles.draftText}>Save Draft</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Temporary Simulate Button */}
+      <View style={styles.simulateContainer}>
+        <TouchableOpacity
+          style={styles.simulateButton}
+          onPress={simulateNewProperty}
+        >
+          <Text style={styles.simulateText}>🎯 Simulate Example Property</Text>
         </TouchableOpacity>
       </View>
 
@@ -367,6 +438,25 @@ const styles = StyleSheet.create({
   draftText: {
     ...textStyles.button,
     color: colors.primary[500],
+  },
+  simulateContainer: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.warning[50],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.warning[200],
+  },
+  simulateButton: {
+    backgroundColor: colors.warning[500],
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.md,
+    alignItems: "center",
+  },
+  simulateText: {
+    ...textStyles.button,
+    color: colors.neutral[0],
+    fontWeight: "600",
   },
   progressContainer: {
     flexDirection: "row",

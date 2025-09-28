@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { 
   PropertyObject, 
   createDefaultPropertyObject,
@@ -86,7 +87,7 @@ export class PropertyManager {
   }
 
   // Save property (draft or final)
-  public saveProperty(isDraft: boolean = true): { success: boolean; propertyId?: string; errors?: string[] } {
+  public async saveProperty(isDraft: boolean = true): Promise<{ success: boolean; propertyId?: string; errors?: string[] }> {
     try {
       // Validate if not draft
       if (!isDraft) {
@@ -110,7 +111,7 @@ export class PropertyManager {
         
         if (this.propertyId && this.isExistingProperty()) {
           // Update existing property
-          const result = ownerPropertyManager.updateProperty(this.propertyId, this.currentProperty);
+          const result = await ownerPropertyManager.updateProperty(this.propertyId, this.currentProperty);
           if (!result.success) {
             return { success: false, errors: result.errors };
           }
@@ -118,37 +119,37 @@ export class PropertyManager {
           // Update status if changed
           const existingProperty = ownerPropertyManager.getPropertyById(this.propertyId);
           if (existingProperty && existingProperty.status !== status) {
-            ownerPropertyManager.updatePropertyStatus(this.propertyId, status);
+            await ownerPropertyManager.updatePropertyStatus(this.propertyId, status);
           }
         } else {
           // Add new property
-          const result = ownerPropertyManager.addProperty(this.currentProperty, status);
+          const result = await ownerPropertyManager.addProperty(this.currentProperty, status);
           if (!result.success) {
             return { success: false, errors: result.errors };
           }
-          this.propertyId = result.propertyId;
+          this.propertyId = result.propertyId || null;
         }
       } else {
-        // Fallback to localStorage if no ownerId
-        this.saveToStorage();
+        // Fallback to AsyncStorage if no ownerId
+        await this.saveToStorage();
       }
 
-      return { success: true, propertyId: this.propertyId };
+      return { success: true, propertyId: this.propertyId || undefined };
     } catch (error) {
       return { success: false, errors: ['Failed to save property'] };
     }
   }
 
   // Publish property (final save)
-  public publishProperty(): { success: boolean; propertyId?: string; errors?: string[] } {
-    return this.saveProperty(false);
+  public async publishProperty(): Promise<{ success: boolean; propertyId?: string; errors?: string[] }> {
+    return await this.saveProperty(false);
   }
 
   // Get property by ID
-  public getPropertyById(id: string): PropertyObject | null {
+  public async getPropertyById(id: string): Promise<PropertyObject | null> {
     try {
-      const savedProperties = this.getSavedProperties();
-      const property = savedProperties.find(p => p.id === id);
+      const savedProperties = await this.getSavedProperties();
+      const property = savedProperties.find((p: any) => p.id === id);
       return property ? property.property : null;
     } catch {
       return null;
@@ -156,9 +157,9 @@ export class PropertyManager {
   }
 
   // Get all saved properties
-  public getSavedProperties(): Array<{ id: string; property: PropertyObject; isDraft: boolean; createdAt: string; updatedAt: string }> {
+  public async getSavedProperties(): Promise<Array<{ id: string; property: PropertyObject; isDraft: boolean; createdAt: string; updatedAt: string }>> {
     try {
-      const saved = localStorage.getItem('saved_properties');
+      const saved = await AsyncStorage.getItem('saved_properties');
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
@@ -166,11 +167,11 @@ export class PropertyManager {
   }
 
   // Delete property
-  public deleteProperty(id: string): boolean {
+  public async deleteProperty(id: string): Promise<boolean> {
     try {
-      const savedProperties = this.getSavedProperties();
+      const savedProperties = await this.getSavedProperties();
       const filtered = savedProperties.filter(p => p.id !== id);
-      localStorage.setItem('saved_properties', JSON.stringify(filtered));
+      await AsyncStorage.setItem('saved_properties', JSON.stringify(filtered));
       return true;
     } catch {
       return false;
@@ -207,7 +208,8 @@ export class PropertyManager {
     if (this.currentProperty.photos.length > 0) completedFields++;
     if (this.currentProperty.availableFrom) completedFields++;
     if (this.currentProperty.price > 0) completedFields++;
-    if (this.currentProperty.name && this.currentProperty.email && this.currentProperty.phone) completedFields++;
+    // Note: name, email, phone are not part of PropertyObject interface
+    // Contact info completion is handled separately if needed
 
     return Math.round((completedFields / totalFields) * 100);
   }
@@ -221,9 +223,9 @@ export class PropertyManager {
     return !!this.propertyId && this.isDraft;
   }
 
-  private saveToStorage(): void {
+  private async saveToStorage(): Promise<void> {
     try {
-      const savedProperties = this.getSavedProperties();
+      const savedProperties = await this.getSavedProperties();
       const existingIndex = savedProperties.findIndex(p => p.id === this.propertyId);
 
       const propertyData = {
@@ -240,7 +242,10 @@ export class PropertyManager {
         savedProperties.push(propertyData);
       }
 
-      localStorage.setItem('saved_properties', JSON.stringify(savedProperties));
+      await AsyncStorage.setItem('saved_properties', JSON.stringify(savedProperties));
+      
+      // Print the saved property object
+      console.log('Saved Property Object (fallback storage):', JSON.stringify(propertyData, null, 2));
     } catch (error) {
       console.error('Failed to save property to storage:', error);
     }
@@ -287,8 +292,8 @@ export const usePropertyManager = (ownerId?: string) => {
     getCompletionPercentage: () => manager.getCompletionPercentage(),
     
     // Save operations
-    saveDraft: () => manager.saveProperty(true),
-    publishProperty: () => manager.publishProperty(),
+    saveDraft: async () => await manager.saveProperty(true),
+    publishProperty: async () => await manager.publishProperty(),
     
     // Utility
     clearProperty: () => manager.clearCurrentProperty(),

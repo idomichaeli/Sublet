@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { SwipeCardData } from "../../features/swipe/components/SwipeCard";
+import { zustandStorage } from "../utils/storage";
 
 type FavoritesState = {
   favorites: SwipeCardData[];
@@ -34,6 +35,7 @@ export const useFavoritesStore = create<FavoritesState>()(
     }),
     {
       name: "favorites-storage",
+      storage: zustandStorage,
       partialize: (state) => ({ favorites: state.favorites }),
     }
   )

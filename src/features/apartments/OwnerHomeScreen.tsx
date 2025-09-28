@@ -1,10 +1,13 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Image,
+  RefreshControl,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -12,9 +15,70 @@ import {
   spacing,
   textStyles,
   borderRadius,
+  shadows,
 } from "../../shared/constants/tokens";
+import { useOwnerPropertyList } from "../../core/services/ownerPropertyListManager";
+import { OwnerProperty } from "../../core/types/ownerPropertyList";
 
-export default function OwnerHomeScreen() {
+interface OwnerHomeScreenProps {
+  ownerId: string;
+  navigation: any;
+}
+
+export default function OwnerHomeScreen({
+  ownerId,
+  navigation,
+}: OwnerHomeScreenProps) {
+  const [refreshing, setRefreshing] = useState(false);
+  const ownerPropertyList = useOwnerPropertyList(ownerId);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    // Simulate refresh delay
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
+  };
+
+  const getPropertyStats = () => {
+    return ownerPropertyList.getPropertyStats();
+  };
+
+  const getPublishedProperties = () => {
+    return ownerPropertyList.getPublishedProperties();
+  };
+
+  const handleDeleteProperty = (propertyId: string, propertyTitle: string) => {
+    Alert.alert(
+      "Delete Property",
+      `Are you sure you want to delete "${propertyTitle}"? This action cannot be undone.`,
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            const result = ownerPropertyList.deleteProperty(propertyId);
+            if (result.success) {
+              Alert.alert("Success", "Property deleted successfully");
+            } else {
+              Alert.alert(
+                "Error",
+                result.errors?.join(", ") || "Failed to delete property"
+              );
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const stats = getPropertyStats();
+  const publishedProperties = getPublishedProperties();
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -22,31 +86,45 @@ export default function OwnerHomeScreen() {
         <Text style={styles.subtitle}>Manage your properties</Text>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <View style={styles.stats}>
           <View style={styles.statCard}>
-            <Text style={styles.statNumber}>3</Text>
-            <Text style={styles.statLabel}>Properties</Text>
+            <Text style={styles.statNumber}>{stats.total}</Text>
+            <Text style={styles.statLabel}>Total Properties</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statNumber}>12</Text>
-            <Text style={styles.statLabel}>Bookings</Text>
+            <Text style={styles.statNumber}>{stats.published}</Text>
+            <Text style={styles.statLabel}>Published</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statNumber}>₪45,000</Text>
-            <Text style={styles.statLabel}>Revenue</Text>
+            <Text style={styles.statNumber}>{stats.draft}</Text>
+            <Text style={styles.statLabel}>Drafts</Text>
           </View>
         </View>
 
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => navigation.navigate("AddProperty")}
+          >
             <Text style={styles.actionIcon}>➕</Text>
             <Text style={styles.actionText}>Add Property</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() =>
+              navigation.navigate("OwnerPropertyList", { ownerId })
+            }
+          >
             <Text style={styles.actionIcon}>📋</Text>
-            <Text style={styles.actionText}>View Bookings</Text>
+            <Text style={styles.actionText}>All Properties</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionButton}>
@@ -58,6 +136,106 @@ export default function OwnerHomeScreen() {
             <Text style={styles.actionIcon}>📊</Text>
             <Text style={styles.actionText}>Analytics</Text>
           </TouchableOpacity>
+        </View>
+
+        {/* Published Properties Section */}
+        <View style={styles.publishedProperties}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Published Properties</Text>
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate("OwnerPropertyList", { ownerId })
+              }
+            >
+              <Text style={styles.viewAllText}>View All</Text>
+            </TouchableOpacity>
+          </View>
+
+          {publishedProperties.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyIcon}>🏠</Text>
+              <Text style={styles.emptyTitle}>No Published Properties</Text>
+              <Text style={styles.emptySubtitle}>
+                Start by adding your first property
+              </Text>
+              <TouchableOpacity
+                style={styles.emptyButton}
+                onPress={() => navigation.navigate("AddProperty")}
+              >
+                <Text style={styles.emptyButtonText}>Add Property</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            publishedProperties.slice(0, 3).map((property) => {
+              const propertyTitle = `${
+                property.propertyCategory === "house" ? "House" : "Apartment"
+              } • ${property.area?.name || "Tel Aviv"}`;
+
+              return (
+                <View key={property.id} style={styles.propertyCard}>
+                  <View style={styles.propertyImageContainer}>
+                    {property.photos.length > 0 ? (
+                      <Image
+                        source={{ uri: property.photos[0] }}
+                        style={styles.propertyImage}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View style={styles.propertyImagePlaceholder}>
+                        <Text style={styles.propertyImagePlaceholderText}>
+                          {property.propertyCategory === "house" ? "🏠" : "🏢"}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+
+                  <View style={styles.propertyInfo}>
+                    <Text style={styles.propertyTitle}>
+                      {property.propertyCategory === "house"
+                        ? "House"
+                        : "Apartment"}{" "}
+                      • {property.area?.name || "Tel Aviv"}
+                    </Text>
+                    <Text style={styles.propertyAddress}>
+                      {property.street} {property.streetNumber}
+                    </Text>
+                    <View style={styles.propertyDetails}>
+                      <Text style={styles.propertyDetail}>
+                        {property.customBedrooms || property.bedrooms} bed
+                      </Text>
+                      <Text style={styles.propertyDetail}>
+                        {property.customBathrooms || property.bathrooms} bath
+                      </Text>
+                      <Text style={styles.propertyDetail}>
+                        {property.size}m²
+                      </Text>
+                    </View>
+                    <Text style={styles.propertyPrice}>
+                      ₪{property.price.toLocaleString()}/month
+                    </Text>
+                  </View>
+
+                  <View style={styles.propertyActions}>
+                    <View style={styles.propertyStats}>
+                      <Text style={styles.statLabel}>Views</Text>
+                      <Text style={styles.statValue}>{property.views}</Text>
+                      <Text style={styles.statLabel}>Inquiries</Text>
+                      <Text style={styles.statValue}>{property.inquiries}</Text>
+                    </View>
+
+                    <TouchableOpacity
+                      style={styles.deleteButton}
+                      onPress={() =>
+                        handleDeleteProperty(property.id, propertyTitle)
+                      }
+                    >
+                      <Text style={styles.deleteButtonText}>🗑️</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              );
+            })
+          )}
         </View>
 
         <View style={styles.recentActivity}>
@@ -117,6 +295,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     borderRadius: borderRadius.lg,
     alignItems: "center",
+    ...shadows.sm,
   },
   statNumber: {
     ...textStyles.h2,
@@ -143,6 +322,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 1,
     borderColor: colors.neutral[200],
+    ...shadows.sm,
   },
   actionIcon: {
     fontSize: 24,
@@ -153,10 +333,148 @@ const styles = StyleSheet.create({
     color: colors.neutral[900],
     fontWeight: "500",
   },
+  publishedProperties: {
+    backgroundColor: colors.neutral[0],
+    padding: spacing.lg,
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing.xl,
+    ...shadows.sm,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: spacing.lg,
+  },
+  viewAllText: {
+    ...textStyles.body,
+    color: colors.primary[600],
+    fontWeight: "500",
+  },
+  emptyState: {
+    alignItems: "center",
+    paddingVertical: spacing.xl,
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: spacing.md,
+  },
+  emptyTitle: {
+    ...textStyles.h3,
+    color: colors.neutral[900],
+    marginBottom: spacing.sm,
+  },
+  emptySubtitle: {
+    ...textStyles.body,
+    color: colors.neutral[600],
+    textAlign: "center",
+    marginBottom: spacing.lg,
+  },
+  emptyButton: {
+    backgroundColor: colors.primary[600],
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+  },
+  emptyButtonText: {
+    ...textStyles.body,
+    color: colors.neutral[0],
+    fontWeight: "500",
+  },
+  propertyCard: {
+    flexDirection: "row",
+    backgroundColor: colors.neutral[50],
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.neutral[200],
+  },
+  propertyImageContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: borderRadius.sm,
+    overflow: "hidden",
+    marginRight: spacing.md,
+  },
+  propertyImage: {
+    width: "100%",
+    height: "100%",
+  },
+  propertyImagePlaceholder: {
+    width: "100%",
+    height: "100%",
+    backgroundColor: colors.neutral[200],
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  propertyImagePlaceholderText: {
+    fontSize: 24,
+  },
+  propertyInfo: {
+    flex: 1,
+    justifyContent: "space-between",
+  },
+  propertyTitle: {
+    ...textStyles.body,
+    color: colors.neutral[900],
+    fontWeight: "600",
+    marginBottom: spacing.xs,
+  },
+  propertyAddress: {
+    ...textStyles.caption,
+    color: colors.neutral[600],
+    marginBottom: spacing.sm,
+  },
+  propertyDetails: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  propertyDetail: {
+    ...textStyles.caption,
+    color: colors.neutral[700],
+    backgroundColor: colors.neutral[100],
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+  },
+  propertyPrice: {
+    ...textStyles.body,
+    color: colors.primary[600],
+    fontWeight: "600",
+  },
+  propertyActions: {
+    alignItems: "center",
+    justifyContent: "space-between",
+    minWidth: 80,
+  },
+  propertyStats: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.sm,
+  },
+  deleteButton: {
+    backgroundColor: colors.error[50],
+    padding: spacing.sm,
+    borderRadius: borderRadius.sm,
+    borderWidth: 1,
+    borderColor: colors.error[200],
+  },
+  deleteButtonText: {
+    fontSize: 16,
+  },
+  statValue: {
+    ...textStyles.h3,
+    color: colors.neutral[900],
+    fontWeight: "600",
+    marginBottom: spacing.xs,
+  },
   recentActivity: {
     backgroundColor: colors.neutral[0],
     padding: spacing.lg,
     borderRadius: borderRadius.lg,
+    ...shadows.sm,
   },
   sectionTitle: {
     ...textStyles.h3,

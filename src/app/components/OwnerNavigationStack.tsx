@@ -7,6 +7,7 @@ import {
   RenterRequestsScreen,
   PaymentsScreen,
 } from "../../features/apartments";
+import PropertyDetailsScreen from "../../features/apartments/screens/PropertyDetailsScreen";
 
 export type OwnerStackParamList = {
   OwnerTabs: undefined;
@@ -14,6 +15,7 @@ export type OwnerStackParamList = {
   EditApartment: { listingId?: string } | undefined;
   RenterRequests: undefined;
   Payments: undefined;
+  PropertyDetails: { property: any };
 };
 
 const Stack = createNativeStackNavigator<OwnerStackParamList>();
@@ -44,6 +46,11 @@ export default function OwnerStack() {
       <Stack.Screen
         name="Payments"
         component={PaymentsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="PropertyDetails"
+        component={PropertyDetailsScreen}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>

@@ -1,6 +1,7 @@
 // Apartment components
 export { default as ProfileActionItem } from './PropertyOwnerProfileActionItem';
 export { default as PropertyCard } from './PropertyOwnerCard';
+export { default as PropertyObjectCard } from './PropertyObjectCard';
 export { default as PropertyStory } from './PropertyOwnerStory';
 export { default as RenterCard } from './PropertyRenterCard';
 

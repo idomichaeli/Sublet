@@ -189,8 +189,8 @@ export const filterPropertiesBySearch = (properties: OwnerProperty[], searchTerm
   return properties.filter(property => 
     property.street.toLowerCase().includes(term) ||
     property.area?.name.toLowerCase().includes(term) ||
-    property.propertyCategory.toLowerCase().includes(term) ||
-    property.propertyType.toLowerCase().includes(term)
+    (property.propertyCategory && property.propertyCategory.toLowerCase().includes(term)) ||
+    (property.propertyType && property.propertyType.toLowerCase().includes(term))
   );
 };
 

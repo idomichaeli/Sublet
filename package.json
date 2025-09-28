@@ -36,6 +36,7 @@
     "zustand": "^5.0.8"
   },
   "devDependencies": {
+    "@react-native-community/cli": "^20.0.2",
     "@types/react": "~19.1.0",
     "sharp": "^0.34.4",
     "typescript": "~5.9.2"

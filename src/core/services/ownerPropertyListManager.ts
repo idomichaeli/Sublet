@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { 
   OwnerProperty, 
   OwnerPropertyList, 
@@ -22,13 +23,15 @@ export class OwnerPropertyListManager {
   constructor(ownerId: string) {
     this.ownerId = ownerId;
     this.propertyList = createDefaultOwnerPropertyList(ownerId);
-    this.loadPropertyList();
+    this.loadPropertyList().catch(error => {
+      console.error('Failed to initialize property list:', error);
+    });
   }
 
   // Initialize property list
-  private loadPropertyList(): void {
+  private async loadPropertyList(): Promise<void> {
     try {
-      const saved = localStorage.getItem(`owner_properties_${this.ownerId}`);
+      const saved = await AsyncStorage.getItem(`owner_properties_${this.ownerId}`);
       if (saved) {
         this.propertyList = JSON.parse(saved);
       }
@@ -38,9 +41,9 @@ export class OwnerPropertyListManager {
   }
 
   // Save property list to storage
-  private savePropertyList(): void {
+  private async savePropertyList(): Promise<void> {
     try {
-      localStorage.setItem(`owner_properties_${this.ownerId}`, JSON.stringify(this.propertyList));
+      await AsyncStorage.setItem(`owner_properties_${this.ownerId}`, JSON.stringify(this.propertyList));
     } catch (error) {
       console.error('Failed to save property list:', error);
     }
@@ -56,7 +59,7 @@ export class OwnerPropertyListManager {
   }
 
   // Add new property to owner's list
-  public addProperty(propertyData: PropertyObject, status: OwnerProperty['status'] = 'draft'): { success: boolean; propertyId?: string; errors?: string[] } {
+  public async addProperty(propertyData: PropertyObject, status: OwnerProperty['status'] = 'draft'): Promise<{ success: boolean; propertyId?: string; errors?: string[] }> {
     try {
       const newProperty = createDefaultOwnerProperty(this.ownerId, propertyData);
       newProperty.status = status;
@@ -67,7 +70,10 @@ export class OwnerPropertyListManager {
 
       this.propertyList.properties.push(newProperty);
       this.updateStats();
-      this.savePropertyList();
+      await this.savePropertyList();
+
+      // Print the saved property object
+      console.log('Saved Property Object:', JSON.stringify(newProperty, null, 2));
 
       return { success: true, propertyId: newProperty.id };
     } catch (error) {
@@ -76,7 +82,7 @@ export class OwnerPropertyListManager {
   }
 
   // Update existing property
-  public updateProperty(propertyId: string, updates: Partial<PropertyObject>): { success: boolean; errors?: string[] } {
+  public async updateProperty(propertyId: string, updates: Partial<PropertyObject>): Promise<{ success: boolean; errors?: string[] }> {
     try {
       const propertyIndex = this.propertyList.properties.findIndex(p => p.id === propertyId);
       
@@ -91,7 +97,7 @@ export class OwnerPropertyListManager {
       };
 
       this.propertyList.properties[propertyIndex] = updatedProperty;
-      this.savePropertyList();
+      await this.savePropertyList();
 
       return { success: true };
     } catch (error) {
@@ -100,7 +106,7 @@ export class OwnerPropertyListManager {
   }
 
   // Update property status
-  public updatePropertyStatus(propertyId: string, newStatus: OwnerProperty['status']): { success: boolean; errors?: string[] } {
+  public async updatePropertyStatus(propertyId: string, newStatus: OwnerProperty['status']): Promise<{ success: boolean; errors?: string[] }> {
     try {
       const propertyIndex = this.propertyList.properties.findIndex(p => p.id === propertyId);
       
@@ -114,7 +120,7 @@ export class OwnerPropertyListManager {
       );
 
       this.updateStats();
-      this.savePropertyList();
+      await this.savePropertyList();
 
       return { success: true };
     } catch (error) {
@@ -123,22 +129,22 @@ export class OwnerPropertyListManager {
   }
 
   // Publish property
-  public publishProperty(propertyId: string): { success: boolean; errors?: string[] } {
-    return this.updatePropertyStatus(propertyId, 'published');
+  public async publishProperty(propertyId: string): Promise<{ success: boolean; errors?: string[] }> {
+    return await this.updatePropertyStatus(propertyId, 'published');
   }
 
   // Archive property
-  public archiveProperty(propertyId: string): { success: boolean; errors?: string[] } {
-    return this.updatePropertyStatus(propertyId, 'archived');
+  public async archiveProperty(propertyId: string): Promise<{ success: boolean; errors?: string[] }> {
+    return await this.updatePropertyStatus(propertyId, 'archived');
   }
 
   // Unarchive property
-  public unarchiveProperty(propertyId: string): { success: boolean; errors?: string[] } {
-    return this.updatePropertyStatus(propertyId, 'published');
+  public async unarchiveProperty(propertyId: string): Promise<{ success: boolean; errors?: string[] }> {
+    return await this.updatePropertyStatus(propertyId, 'published');
   }
 
   // Delete property
-  public deleteProperty(propertyId: string): { success: boolean; errors?: string[] } {
+  public async deleteProperty(propertyId: string): Promise<{ success: boolean; errors?: string[] }> {
     try {
       const propertyIndex = this.propertyList.properties.findIndex(p => p.id === propertyId);
       
@@ -148,7 +154,7 @@ export class OwnerPropertyListManager {
 
       this.propertyList.properties.splice(propertyIndex, 1);
       this.updateStats();
-      this.savePropertyList();
+      await this.savePropertyList();
 
       return { success: true };
     } catch (error) {
@@ -211,7 +217,7 @@ export class OwnerPropertyListManager {
   }
 
   // Increment property views
-  public incrementViews(propertyId: string): { success: boolean; errors?: string[] } {
+  public async incrementViews(propertyId: string): Promise<{ success: boolean; errors?: string[] }> {
     try {
       const propertyIndex = this.propertyList.properties.findIndex(p => p.id === propertyId);
       
@@ -223,7 +229,7 @@ export class OwnerPropertyListManager {
         this.propertyList.properties[propertyIndex]
       );
 
-      this.savePropertyList();
+      await this.savePropertyList();
       return { success: true };
     } catch (error) {
       return { success: false, errors: ['Failed to increment views'] };
@@ -231,7 +237,7 @@ export class OwnerPropertyListManager {
   }
 
   // Increment property inquiries
-  public incrementInquiries(propertyId: string): { success: boolean; errors?: string[] } {
+  public async incrementInquiries(propertyId: string): Promise<{ success: boolean; errors?: string[] }> {
     try {
       const propertyIndex = this.propertyList.properties.findIndex(p => p.id === propertyId);
       
@@ -243,7 +249,7 @@ export class OwnerPropertyListManager {
         this.propertyList.properties[propertyIndex]
       );
 
-      this.savePropertyList();
+      await this.savePropertyList();
       return { success: true };
     } catch (error) {
       return { success: false, errors: ['Failed to increment inquiries'] };
@@ -251,7 +257,7 @@ export class OwnerPropertyListManager {
   }
 
   // Increment property bookings
-  public incrementBookings(propertyId: string): { success: boolean; errors?: string[] } {
+  public async incrementBookings(propertyId: string): Promise<{ success: boolean; errors?: string[] }> {
     try {
       const propertyIndex = this.propertyList.properties.findIndex(p => p.id === propertyId);
       
@@ -259,11 +265,11 @@ export class OwnerPropertyListManager {
         return { success: false, errors: ['Property not found'] };
       }
 
-      this.propertyList.properties[propertyId] = incrementPropertyBookings(
+      this.propertyList.properties[propertyIndex] = incrementPropertyBookings(
         this.propertyList.properties[propertyIndex]
       );
 
-      this.savePropertyList();
+      await this.savePropertyList();
       return { success: true };
     } catch (error) {
       return { success: false, errors: ['Failed to increment bookings'] };
@@ -294,18 +300,18 @@ export const useOwnerPropertyList = (ownerId: string) => {
 
   return {
     // Property management
-    addProperty: (propertyData: PropertyObject, status?: OwnerProperty['status']) => 
-      manager.addProperty(propertyData, status),
-    updateProperty: (propertyId: string, updates: Partial<PropertyObject>) => 
-      manager.updateProperty(propertyId, updates),
-    deleteProperty: (propertyId: string) => manager.deleteProperty(propertyId),
+    addProperty: async (propertyData: PropertyObject, status?: OwnerProperty['status']) => 
+      await manager.addProperty(propertyData, status),
+    updateProperty: async (propertyId: string, updates: Partial<PropertyObject>) => 
+      await manager.updateProperty(propertyId, updates),
+    deleteProperty: async (propertyId: string) => await manager.deleteProperty(propertyId),
     
     // Status management
-    updatePropertyStatus: (propertyId: string, status: OwnerProperty['status']) => 
-      manager.updatePropertyStatus(propertyId, status),
-    publishProperty: (propertyId: string) => manager.publishProperty(propertyId),
-    archiveProperty: (propertyId: string) => manager.archiveProperty(propertyId),
-    unarchiveProperty: (propertyId: string) => manager.unarchiveProperty(propertyId),
+    updatePropertyStatus: async (propertyId: string, status: OwnerProperty['status']) => 
+      await manager.updatePropertyStatus(propertyId, status),
+    publishProperty: async (propertyId: string) => await manager.publishProperty(propertyId),
+    archiveProperty: async (propertyId: string) => await manager.archiveProperty(propertyId),
+    unarchiveProperty: async (propertyId: string) => await manager.unarchiveProperty(propertyId),
     
     // Data retrieval
     getPropertyById: (propertyId: string) => manager.getPropertyById(propertyId),
@@ -322,8 +328,8 @@ export const useOwnerPropertyList = (ownerId: string) => {
     searchProperties: (searchTerm: string) => manager.searchProperties(searchTerm),
     
     // Analytics
-    incrementViews: (propertyId: string) => manager.incrementViews(propertyId),
-    incrementInquiries: (propertyId: string) => manager.incrementInquiries(propertyId),
-    incrementBookings: (propertyId: string) => manager.incrementBookings(propertyId),
+    incrementViews: async (propertyId: string) => await manager.incrementViews(propertyId),
+    incrementInquiries: async (propertyId: string) => await manager.incrementInquiries(propertyId),
+    incrementBookings: async (propertyId: string) => await manager.incrementBookings(propertyId),
   };
 };

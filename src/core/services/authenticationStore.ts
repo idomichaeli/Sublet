@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { UserRole, User } from "../types/userProfile";
+import { zustandStorage } from "../utils/storage";
 
 type AuthState = {
   isAuthenticated: boolean;
@@ -26,6 +27,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "auth-storage",
+      storage: zustandStorage,
       partialize: (state) => ({ 
         isAuthenticated: state.isAuthenticated,
         token: state.token,

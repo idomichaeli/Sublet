@@ -145,9 +145,18 @@ export default function OwnerPropertyListScreen({
     });
   };
 
+  // Handle property press to navigate to details
+  const handlePropertyPress = (property: OwnerProperty) => {
+    navigation.navigate("PropertyDetails", { property });
+  };
+
   // Render property item
   const renderPropertyItem = ({ item: property }: { item: OwnerProperty }) => (
-    <View style={styles.propertyCard}>
+    <TouchableOpacity
+      style={styles.propertyCard}
+      onPress={() => handlePropertyPress(property)}
+      activeOpacity={0.8}
+    >
       <View style={styles.propertyHeader}>
         <View style={styles.propertyInfo}>
           <Text style={styles.propertyTitle}>
@@ -236,7 +245,7 @@ export default function OwnerPropertyListScreen({
           </Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   // Get status color
