@@ -90,22 +90,22 @@ export default function BottomTabNavigator() {
       <Tab.Screen
         name="Home"
         component={HomeScreen}
-        options={{ title: "Browse" }}
+        options={{ headerShown: false }}
       />
       <Tab.Screen
         name="Favorites"
         component={FavoritesTabScreen}
-        options={{ title: "Favorites" }}
+        options={{ headerShown: false }}
       />
       <Tab.Screen
         name="Bookings"
         component={MyBookingsScreen}
-        options={{ title: "My Bookings" }}
+        options={{ headerShown: false }}
       />
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
-        options={{ title: "Profile" }}
+        options={{ headerShown: false }}
       />
     </Tab.Navigator>
   );

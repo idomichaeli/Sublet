@@ -83,7 +83,6 @@ export default function OwnerBottomTabNavigator() {
         name="Home"
         component={OwnerHomeScreen}
         options={{
-          title: "Home",
           headerShown: false,
         }}
       />
@@ -91,7 +90,6 @@ export default function OwnerBottomTabNavigator() {
         name="Offers"
         component={InterestedRentersScreen}
         options={{
-          title: "Offers",
           headerShown: false,
         }}
       />
@@ -99,7 +97,6 @@ export default function OwnerBottomTabNavigator() {
         name="Chat"
         component={OwnerChatScreen}
         options={{
-          title: "Chat",
           headerShown: false,
         }}
       />
@@ -107,7 +104,6 @@ export default function OwnerBottomTabNavigator() {
         name="Profile"
         component={OwnerProfileScreen}
         options={{
-          title: "Profile",
           headerShown: false,
         }}
       />

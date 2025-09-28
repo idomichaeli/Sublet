@@ -1,10 +1,11 @@
 import { SwipeCardData } from "../../features/swipe/components/SwipeCard";
+import { TEL_AVIV_LOCATIONS } from "../constants/locations";
 
 export const mockApartments: SwipeCardData[] = [
   {
     id: "1",
-    title: "Modern Studio in Tel Aviv",
-    location: "Tel Aviv, Israel",
+    title: "Modern Studio in Neve Tzedek",
+    location: TEL_AVIV_LOCATIONS[20], // Neve Tzedek
     price: 3500,
     rooms: 1,
     bathrooms: 1,
@@ -18,8 +19,8 @@ export const mockApartments: SwipeCardData[] = [
   },
   {
     id: "2",
-    title: "Cozy 2BR Apartment",
-    location: "Jerusalem, Israel",
+    title: "Cozy 2BR in Florentin",
+    location: TEL_AVIV_LOCATIONS[23], // Florentin
     price: 2800,
     rooms: 2,
     bathrooms: 1,
@@ -33,8 +34,8 @@ export const mockApartments: SwipeCardData[] = [
   },
   {
     id: "3",
-    title: "Luxury 3BR Penthouse",
-    location: "Haifa, Israel",
+    title: "Luxury 3BR in Ramat Aviv",
+    location: TEL_AVIV_LOCATIONS[3], // Ramat Aviv Aleph
     price: 5500,
     rooms: 3,
     bathrooms: 2,
@@ -48,8 +49,8 @@ export const mockApartments: SwipeCardData[] = [
   },
   {
     id: "4",
-    title: "Budget 1BR Apartment",
-    location: "Beer Sheva, Israel",
+    title: "Budget 1BR in Shapira",
+    location: TEL_AVIV_LOCATIONS[27], // Shapira
     price: 1800,
     rooms: 1,
     bathrooms: 1,
@@ -63,8 +64,8 @@ export const mockApartments: SwipeCardData[] = [
   },
   {
     id: "5",
-    title: "Family 4BR House",
-    location: "Netanya, Israel",
+    title: "Family 4BR in Tzahala",
+    location: TEL_AVIV_LOCATIONS[9], // Tzahala
     price: 4200,
     rooms: 4,
     bathrooms: 3,

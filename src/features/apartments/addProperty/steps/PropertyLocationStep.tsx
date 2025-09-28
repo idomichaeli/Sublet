@@ -27,7 +27,6 @@ import * as Location from "expo-location";
 export default function LocationStep({ data, onUpdate }: StepProps) {
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [showShelterOptions, setShowShelterOptions] = useState(false);
-  const [showNeighborhoodPicker, setShowNeighborhoodPicker] = useState(false);
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const [pulseAnim] = useState(new Animated.Value(1));
 
@@ -89,6 +88,65 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
     return false;
   };
 
+  // Function to detect neighborhood from address
+  const detectNeighborhoodFromAddress = (address: string): string | null => {
+    if (!address) return null;
+
+    const addressLower = address.toLowerCase();
+
+    // Check each neighborhood name in the address
+    for (const neighborhood of TEL_AVIV_LOCATIONS) {
+      const neighborhoodLower = neighborhood.toLowerCase();
+
+      // Direct match
+      if (addressLower.includes(neighborhoodLower)) {
+        return neighborhood;
+      }
+
+      // Handle common variations and abbreviations
+      const variations = getNeighborhoodVariations(neighborhood);
+      for (const variation of variations) {
+        if (addressLower.includes(variation.toLowerCase())) {
+          return neighborhood;
+        }
+      }
+    }
+
+    return null;
+  };
+
+  // Function to get common variations of neighborhood names
+  const getNeighborhoodVariations = (neighborhood: string): string[] => {
+    const variations: { [key: string]: string[] } = {
+      "Ramat Aviv Aleph": ["ramat aviv a", "ramat aviv 1", "ramat aviv alef"],
+      "Ramat Aviv Gimmel": ["ramat aviv g", "ramat aviv 3", "ramat aviv gimel"],
+      "Ramat Aviv HaHadasha": [
+        "ramat aviv hadasha",
+        "ramat aviv new",
+        "ramat aviv ha-hadasha",
+      ],
+      "HaTzafon HaYashan (Old North)": [
+        "old north",
+        "hatzafon hayashan",
+        "north",
+        "tzafon",
+      ],
+      "Neve Tzedek": ["neve tzadek", "neve tzadik"],
+      "Kerem HaTeimanim": ["kerem hateimanim", "kerem", "teimanim"],
+      "American–German Colony": [
+        "american german",
+        "german colony",
+        "american colony",
+      ],
+      "Nahalat Yitzhak": ["nahalat yitzchak", "nahalat"],
+      "Ramat HaTayasim": ["ramat hatayasim", "tayasim"],
+      "Kfar Shalem": ["kfar shalom", "shalem"],
+      "Giv'at Aliyah": ["givat aliyah", "aliyah"],
+    };
+
+    return variations[neighborhood] || [];
+  };
+
   // Function to find the closest neighborhood based on coordinates
   const findNeighborhoodFromCoordinates = (
     latitude: number,
@@ -133,26 +191,53 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
 
     try {
       const fullAddress = `${street} ${number}, Tel Aviv, Israel`;
-      const geocodeResult = await Location.geocodeAsync(fullAddress);
 
-      if (geocodeResult.length > 0) {
-        const { latitude, longitude } = geocodeResult[0];
+      // First try to detect neighborhood from address text
+      const detectedNeighborhood = detectNeighborhoodFromAddress(fullAddress);
 
-        // Find the closest neighborhood
-        const detectedArea = findNeighborhoodFromCoordinates(
-          latitude,
-          longitude
-        );
+      if (detectedNeighborhood) {
+        // Find the index of the detected neighborhood
+        const neighborhoodIndex =
+          TEL_AVIV_LOCATIONS.indexOf(detectedNeighborhood);
 
-        if (detectedArea) {
-          onUpdate({ area: detectedArea });
-          onUpdate({
-            location: {
-              latitude,
-              longitude,
-              address: fullAddress,
-            },
-          });
+        onUpdate({
+          area: {
+            id: `neighborhood-${neighborhoodIndex}`,
+            name: detectedNeighborhood,
+            coordinates: { lat: 32.0853, lng: 34.7818 },
+            areas: [
+              {
+                id: `neighborhood-${neighborhoodIndex}`,
+                name: detectedNeighborhood,
+                city: "Tel Aviv",
+                apartments: 0,
+              },
+            ],
+          },
+        });
+      } else {
+        // Fallback to geocoding if neighborhood not detected from text
+        const geocodeResult = await Location.geocodeAsync(fullAddress);
+
+        if (geocodeResult.length > 0) {
+          const { latitude, longitude } = geocodeResult[0];
+
+          // Find the closest neighborhood
+          const detectedArea = findNeighborhoodFromCoordinates(
+            latitude,
+            longitude
+          );
+
+          if (detectedArea) {
+            onUpdate({ area: detectedArea });
+            onUpdate({
+              location: {
+                latitude,
+                longitude,
+                address: fullAddress,
+              },
+            });
+          }
         }
       }
     } catch (error) {
@@ -278,20 +363,13 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
           {/* Neighborhood */}
           <View style={styles.inputField}>
             <Text style={styles.fieldLabel}>Neighborhood</Text>
-            <TouchableOpacity
-              style={styles.neighborhoodSelector}
-              onPress={() => setShowNeighborhoodPicker(true)}
-            >
-              <Text
-                style={[
-                  styles.neighborhoodText,
-                  !data.area?.name && styles.placeholderText,
-                ]}
-              >
-                {data.area?.name || "Select neighborhood"}
-              </Text>
-              <Text style={styles.dropdownIcon}>▼</Text>
-            </TouchableOpacity>
+            <TextInput
+              style={styles.textInput}
+              value={data.area?.name || ""}
+              placeholder="Neighborhood will be detected from address"
+              placeholderTextColor={colors.neutral[400]}
+              editable={false}
+            />
           </View>
 
           {/* City */}
@@ -305,64 +383,6 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
               editable={false}
             />
           </View>
-
-          {/* Neighborhood Picker Modal */}
-          {showNeighborhoodPicker && (
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalContent}>
-                <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Select Neighborhood</Text>
-                  <TouchableOpacity
-                    onPress={() => setShowNeighborhoodPicker(false)}
-                    style={styles.closeButton}
-                  >
-                    <Text style={styles.closeButtonText}>✕</Text>
-                  </TouchableOpacity>
-                </View>
-                <ScrollView style={styles.neighborhoodList}>
-                  {TEL_AVIV_LOCATIONS.map((neighborhood, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={[
-                        styles.neighborhoodOption,
-                        data.area?.name === neighborhood &&
-                          styles.neighborhoodOptionSelected,
-                      ]}
-                      onPress={() => {
-                        onUpdate({
-                          ...data,
-                          area: {
-                            id: `neighborhood-${index}`,
-                            name: neighborhood,
-                            coordinates: { lat: 32.0853, lng: 34.7818 },
-                            areas: [
-                              {
-                                id: `neighborhood-${index}`,
-                                name: neighborhood,
-                                city: "Tel Aviv",
-                                apartments: 0,
-                              },
-                            ],
-                          },
-                        });
-                        setShowNeighborhoodPicker(false);
-                      }}
-                    >
-                      <Text
-                        style={[
-                          styles.neighborhoodOptionText,
-                          data.area?.name === neighborhood &&
-                            styles.neighborhoodOptionTextSelected,
-                        ]}
-                      >
-                        {neighborhood}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            </View>
-          )}
 
           {/* State */}
           <View style={styles.inputField}>
@@ -760,87 +780,6 @@ const styles = StyleSheet.create({
     color: colors.neutral[900],
     fontWeight: "600",
     marginBottom: spacing.lg,
-  },
-  neighborhoodSelector: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.neutral[200],
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.neutral[0],
-  },
-  neighborhoodText: {
-    ...textStyles.body,
-    color: colors.neutral[900],
-    flex: 1,
-  },
-  placeholderText: {
-    color: colors.neutral[400],
-  },
-  dropdownIcon: {
-    ...textStyles.caption,
-    color: colors.neutral[500],
-    marginLeft: spacing.sm,
-  },
-  modalOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 1000,
-  },
-  modalContent: {
-    backgroundColor: colors.neutral[0],
-    borderRadius: borderRadius.lg,
-    width: "90%",
-    maxHeight: "70%",
-    ...shadows.lg,
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.neutral[200],
-  },
-  modalTitle: {
-    ...textStyles.h3,
-    color: colors.neutral[900],
-    fontWeight: "600",
-  },
-  closeButton: {
-    padding: spacing.sm,
-  },
-  closeButtonText: {
-    ...textStyles.h3,
-    color: colors.neutral[500],
-  },
-  neighborhoodList: {
-    maxHeight: 400,
-  },
-  neighborhoodOption: {
-    padding: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.neutral[100],
-  },
-  neighborhoodOptionSelected: {
-    backgroundColor: colors.primary[50],
-  },
-  neighborhoodOptionText: {
-    ...textStyles.body,
-    color: colors.neutral[900],
-  },
-  neighborhoodOptionTextSelected: {
-    color: colors.primary[600],
-    fontWeight: "600",
   },
   shelterQuestion: {
     ...textStyles.body,

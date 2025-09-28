@@ -6,7 +6,7 @@ export const mockApartments: SwipeCardData[] = [
     id: '1',
     title: 'Modern 2BR Apartment',
     price: 120,
-    location: TEL_AVIV_LOCATIONS[0], // City Center
+    location: TEL_AVIV_LOCATIONS[0], // Neve Avivim
     imageUrl: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&h=600&fit=crop',
     rating: 4.8,
     isFavorite: false,
@@ -21,7 +21,7 @@ export const mockApartments: SwipeCardData[] = [
     id: '2',
     title: 'Cozy Studio with City View',
     price: 95,
-    location: TEL_AVIV_LOCATIONS[3], // Florentin
+    location: TEL_AVIV_LOCATIONS[3], // Ramat Aviv Aleph
     imageUrl: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=600&fit=crop',
     rating: 4.6,
     isFavorite: false,
@@ -36,7 +36,7 @@ export const mockApartments: SwipeCardData[] = [
     id: '3',
     title: 'Luxury Penthouse Suite',
     price: 280,
-    location: TEL_AVIV_LOCATIONS[0], // City Center
+    location: TEL_AVIV_LOCATIONS[0], // Neve Avivim
     imageUrl: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&h=600&fit=crop',
     rating: 4.9,
     isFavorite: false,
@@ -51,7 +51,7 @@ export const mockApartments: SwipeCardData[] = [
     id: '4',
     title: 'Charming Garden Apartment',
     price: 85,
-    location: TEL_AVIV_LOCATIONS[4], // Neve Tzedek
+    location: TEL_AVIV_LOCATIONS[4], // Ramat Aviv Gimmel
     imageUrl: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=600&fit=crop',
     rating: 4.4,
     isFavorite: false,
@@ -66,7 +66,7 @@ export const mockApartments: SwipeCardData[] = [
     id: '5',
     title: 'Modern Loft with Exposed Brick',
     price: 150,
-    location: TEL_AVIV_LOCATIONS[5], // Jaffa
+    location: TEL_AVIV_LOCATIONS[5], // Ramat Aviv HaHadasha
     imageUrl: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=600&fit=crop',
     rating: 4.7,
     isFavorite: false,
@@ -81,7 +81,7 @@ export const mockApartments: SwipeCardData[] = [
     id: '6',
     title: 'Beachfront Studio',
     price: 200,
-    location: TEL_AVIV_LOCATIONS[8], // HaYarkon / Namal Tel Aviv
+    location: TEL_AVIV_LOCATIONS[8], // Hadar Yosef
     imageUrl: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&h=600&fit=crop',
     rating: 4.9,
     isFavorite: false,
@@ -96,7 +96,7 @@ export const mockApartments: SwipeCardData[] = [
     id: '7',
     title: 'Historic Bauhaus Apartment',
     price: 110,
-    location: TEL_AVIV_LOCATIONS[1], // Lev HaIr
+    location: TEL_AVIV_LOCATIONS[1], // Azorei Hen
     imageUrl: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=600&fit=crop',
     rating: 4.5,
     isFavorite: false,
@@ -111,7 +111,7 @@ export const mockApartments: SwipeCardData[] = [
     id: '8',
     title: 'Contemporary 1BR with Balcony',
     price: 135,
-    location: TEL_AVIV_LOCATIONS[7], // Sarona & HaKirya
+    location: TEL_AVIV_LOCATIONS[7], // Ma'oz Aviv
     imageUrl: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&h=600&fit=crop',
     rating: 4.6,
     isFavorite: false,
@@ -126,7 +126,7 @@ export const mockApartments: SwipeCardData[] = [
     id: '9',
     title: 'Minimalist Studio',
     price: 90,
-    location: TEL_AVIV_LOCATIONS[2], // Kerem HaTeimanim
+    location: TEL_AVIV_LOCATIONS[2], // Kokhav HaTzafon
     imageUrl: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=600&fit=crop',
     rating: 4.3,
     isFavorite: false,
@@ -141,7 +141,7 @@ export const mockApartments: SwipeCardData[] = [
     id: '10',
     title: 'Designer Apartment with Rooftop',
     price: 220,
-    location: TEL_AVIV_LOCATIONS[16], // Ramat Aviv
+    location: TEL_AVIV_LOCATIONS[16], // Giv'at Amal Bet
     imageUrl: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&h=600&fit=crop',
     rating: 4.8,
     isFavorite: false,
@@ -156,7 +156,7 @@ export const mockApartments: SwipeCardData[] = [
     id: '11',
     title: 'Artistic Loft Space',
     price: 160,
-    location: TEL_AVIV_LOCATIONS[3], // Florentin
+    location: TEL_AVIV_LOCATIONS[3], // Ramat Aviv Aleph
     imageUrl: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=600&fit=crop',
     rating: 4.7,
     isFavorite: false,
@@ -171,7 +171,7 @@ export const mockApartments: SwipeCardData[] = [
     id: '12',
     title: 'Family-Friendly 3BR',
     price: 180,
-    location: TEL_AVIV_LOCATIONS[9], // Bavli
+    location: TEL_AVIV_LOCATIONS[9], // Tzahala
     imageUrl: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&h=600&fit=crop',
     rating: 4.5,
     isFavorite: false,
@@ -186,7 +186,7 @@ export const mockApartments: SwipeCardData[] = [
     id: '13',
     title: 'Boutique Hotel-Style Room',
     price: 140,
-    location: TEL_AVIV_LOCATIONS[6], // Allenby & Carmel Market
+    location: TEL_AVIV_LOCATIONS[6], // Ne'ot Afeka
     imageUrl: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=600&fit=crop',
     rating: 4.6,
     isFavorite: false,
@@ -201,7 +201,7 @@ export const mockApartments: SwipeCardData[] = [
     id: '14',
     title: 'Modern High-Rise Apartment',
     price: 195,
-    location: TEL_AVIV_LOCATIONS[20], // Ramat HaHayal
+    location: TEL_AVIV_LOCATIONS[20], // Neve Tzedek
     imageUrl: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&h=600&fit=crop',
     rating: 4.8,
     isFavorite: false,
@@ -216,7 +216,7 @@ export const mockApartments: SwipeCardData[] = [
     id: '15',
     title: 'Cozy Basement Studio',
     price: 75,
-    location: TEL_AVIV_LOCATIONS[2], // Kerem HaTeimanim
+    location: TEL_AVIV_LOCATIONS[2], // Kokhav HaTzafon
     imageUrl: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=600&fit=crop',
     rating: 4.2,
     isFavorite: false,

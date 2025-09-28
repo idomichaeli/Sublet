@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { useFavoritesStore } from "../../../shared/hooks/state/favoritesStore";
 import { SwipeCardData } from "../components/SwipeCard";
+import { browserApartments } from "../data/browserData";
 import {
   colors,
   spacing,
@@ -43,13 +44,22 @@ export default function FavoritesScreen({ navigation }: any) {
     null
   );
 
+  // Get favorite apartments data
+  const favoriteApartments = useMemo(() => {
+    return browserApartments.filter((apartment) =>
+      favorites.includes(apartment.id)
+    );
+  }, [favorites]);
+
   // Filter favorites based on selected area
   const filteredFavorites = useMemo(() => {
     if (!selectedArea) {
-      return favorites;
+      return favoriteApartments;
     }
-    return favorites.filter((favId: string) => favId === selectedArea.id);
-  }, [favorites, selectedArea]);
+    return favoriteApartments.filter(
+      (apartment) => apartment.location === selectedArea.name
+    );
+  }, [favoriteApartments, selectedArea]);
 
   const handleApartmentPress = (apartmentId: string) => {
     navigation.navigate("ListingDetails", { listingId: apartmentId });
@@ -64,14 +74,36 @@ export default function FavoritesScreen({ navigation }: any) {
     setRequestBottomSheetVisible(true);
   };
 
-  const handleRequestCreated = () => {
-    // Force re-render of all RequestButton components to pick up new request
-    // Since the request is already in the store, we just need to trigger a re-render
+  const handleRequestCreated = (requestData: {
+    message: string;
+    selectedPrice: number;
+    startDate: string;
+    endDate: string;
+  }) => {
+    if (selectedListing) {
+      // Create a new rental request
+      const newRequest = {
+        id: `request-${Date.now()}`,
+        propertyId: selectedListing.id,
+        renterId: "current-user-id", // TODO: Get from auth context
+        ownerId: selectedListing.ownerId,
+        status: "pending" as const,
+        message: requestData.message,
+        requestedDates: {
+          checkIn: requestData.startDate,
+          checkOut: requestData.endDate,
+        },
+        guests: 1, // TODO: Add guest selector
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Add to request store
+      addRequest(newRequest);
+    }
+
     setRequestBottomSheetVisible(false);
     setSelectedListing(null);
-
-    // The RequestButton components will automatically pick up the new request
-    // from the store when they re-render
   };
 
   const handleRemoveFavorite = (apartmentId: string) => {
@@ -155,13 +187,16 @@ export default function FavoritesScreen({ navigation }: any) {
 
         {/* Request Button */}
         <View style={styles.requestButtonContainer}>
-          <RequestButton onPress={() => handleRequestPress(item)} />
+          <RequestButton
+            onPress={() => handleRequestPress(item)}
+            propertyId={item.id}
+          />
         </View>
       </View>
     </View>
   );
 
-  if (favorites.length === 0) {
+  if (favoriteApartments.length === 0) {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
         <EmptyState
@@ -179,7 +214,7 @@ export default function FavoritesScreen({ navigation }: any) {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
         <AreaStories
-          favorites={[]}
+          favorites={favoriteApartments}
           onAreaPress={handleAreaPress}
           selectedArea={selectedArea}
         />
@@ -211,7 +246,7 @@ export default function FavoritesScreen({ navigation }: any) {
   return (
     <SafeAreaView style={styles.container} edges={[]}>
       <AreaStories
-        favorites={[]}
+        favorites={favoriteApartments}
         onAreaPress={handleAreaPress}
         selectedArea={selectedArea}
       />
@@ -233,9 +268,9 @@ export default function FavoritesScreen({ navigation }: any) {
       )}
 
       <FlatList
-        data={[]}
+        data={filteredFavorites}
         renderItem={renderFavoriteItem}
-        keyExtractor={(item) => item.toString()}
+        keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
       />
@@ -249,6 +284,7 @@ export default function FavoritesScreen({ navigation }: any) {
             setSelectedListing(null);
           }}
           onSubmit={handleRequestCreated}
+          listing={selectedListing}
         />
       )}
     </SafeAreaView>

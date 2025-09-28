@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, StatusBar } from "react-native";
+import { View, StyleSheet, StatusBar, SafeAreaView } from "react-native";
 import { SwipeCardData } from "./components/SwipeCard";
 import SwipeStack from "./components/SwipeStack";
 import SwipeEmptyState from "./components/PropertySwipeEmptyState";
@@ -121,8 +121,18 @@ export default function SwipeDiscoveryScreen({
   };
 
   const handleSwipeLeft = (apartment: SwipeCardData) => {
-    console.log("Passed apartment:", apartment.title);
-    setPassedApartments((prev) => [...prev, apartment]);
+    console.log("Added to favorites:", apartment.title);
+    setLikedApartments((prev) => [...prev, apartment]);
+
+    // Add to favorites store
+    addFavorite(apartment.id);
+
+    // Update the apartment as favorite
+    setApartments((prev) =>
+      prev.map((apt) =>
+        apt.id === apartment.id ? { ...apt, isFavorite: true } : apt
+      )
+    );
   };
 
   const handleEmpty = () => {
@@ -256,8 +266,11 @@ export default function SwipeDiscoveryScreen({
   }
 
   return (
-    <>
+    <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.neutral[50]} />
+
+      {/* Minimal top padding for status bar */}
+      <View style={styles.topPadding} />
 
       {/* HomeHeader */}
       <HomeHeader
@@ -281,7 +294,7 @@ export default function SwipeDiscoveryScreen({
           onEmpty={handleEmpty}
         />
       </View>
-    </>
+    </View>
   );
 }
 
@@ -289,6 +302,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.neutral[50],
+  },
+  topPadding: {
+    height: 40, // Minimal padding for status bar
   },
   swipeContainer: {
     flex: 1,
