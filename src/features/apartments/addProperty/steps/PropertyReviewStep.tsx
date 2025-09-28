@@ -9,7 +9,7 @@ import {
 } from "../../../../shared/constants/tokens";
 import Card from "../../../../shared/components/ui/Card";
 import AnimatedRoomCounter from "../../../../shared/components/ui/AnimatedRoomCounter";
-import { StepProps } from "../types/PropertyCreationData";
+import { PropertyReviewObject } from "../../../../core/types/propertyObjects";
 
 const AMENITIES = [
   { id: "furnished", label: "Furnished", icon: "🛋️" },
@@ -28,6 +28,11 @@ const AMENITIES = [
   { id: "storage", label: "Storage", icon: "📦" },
   { id: "garden", label: "Garden", icon: "🌳" },
 ];
+
+interface StepProps {
+  data: PropertyReviewObject;
+  onUpdate: (updates: Partial<PropertyReviewObject>) => void;
+}
 
 export default function ReviewStep({ data, onUpdate }: StepProps) {
   const getRenovationLabel = (renovation: string) => {
@@ -145,16 +150,6 @@ export default function ReviewStep({ data, onUpdate }: StepProps) {
       </Card>
 
       <Card style={styles.reviewCard}>
-        <View style={styles.reviewSection}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionIcon}>👤</Text>
-            <Text style={styles.reviewLabel}>Contact Information</Text>
-          </View>
-          <Text style={styles.reviewValue}>{data.name}</Text>
-          <Text style={styles.reviewValue}>{data.email}</Text>
-          <Text style={styles.reviewValue}>{data.phone}</Text>
-        </View>
-
         <View style={styles.reviewSection}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionIcon}>📍</Text>

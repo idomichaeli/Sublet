@@ -6,7 +6,12 @@ import {
   textStyles,
 } from "../../../../shared/constants/tokens";
 import PropertyImageUpload from "../../../../shared/components/ui/PropertyImageUpload";
-import { StepProps } from "../types/PropertyCreationData";
+import { PropertyPhotosObject } from "../../../../core/types/propertyObjects";
+
+interface StepProps {
+  data: PropertyPhotosObject;
+  onUpdate: (updates: Partial<PropertyPhotosObject>) => void;
+}
 
 export default function PhotosStep({ data, onUpdate }: StepProps) {
   return (

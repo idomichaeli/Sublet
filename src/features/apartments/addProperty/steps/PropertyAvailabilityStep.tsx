@@ -23,7 +23,12 @@ import DateRangePicker, {
 import FlexibilityChipGroup, {
   FlexibilityOption,
 } from "../../../../shared/components/ui/FlexibilityChipGroup";
-import { StepProps } from "../types/PropertyCreationData";
+import { PropertyAvailabilityObject } from "../../../../core/types/propertyObjects";
+
+interface StepProps {
+  data: PropertyAvailabilityObject;
+  onUpdate: (updates: Partial<PropertyAvailabilityObject>) => void;
+}
 
 export default function AvailabilityStep({ data, onUpdate }: StepProps) {
   const colorScheme = useColorScheme();

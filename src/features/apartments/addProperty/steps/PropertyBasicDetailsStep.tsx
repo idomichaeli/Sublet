@@ -10,7 +10,7 @@ import Chip from "../../../../shared/components/ui/Chip";
 import SizeInput from "../../../../shared/components/ui/SizeInput";
 import Input from "../../../../shared/components/ui/Input";
 import Toggle from "../../../../shared/components/ui/Toggle";
-import { StepProps } from "../types/PropertyCreationData";
+import { PropertyBasicDetailsObject } from "../../../../core/types/propertyObjects";
 
 // Specific room options (shown above Additional Rooms)
 const SPECIFIC_ROOMS = ["Kitchen", "Balcony", "Garden/Yard", "Pantry"];
@@ -40,6 +40,11 @@ const validateDecimalInput = (text: string): number | undefined => {
 
   return undefined;
 };
+
+interface StepProps {
+  data: PropertyBasicDetailsObject;
+  onUpdate: (updates: Partial<PropertyBasicDetailsObject>) => void;
+}
 
 export default function BasicDetailsStep({ data, onUpdate }: StepProps) {
   const [bedroomInputText, setBedroomInputText] = useState(

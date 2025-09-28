@@ -6,7 +6,7 @@ import {
   textStyles,
 } from "../../../../shared/constants/tokens";
 import Chip from "../../../../shared/components/ui/Chip";
-import { StepProps } from "../types/PropertyCreationData";
+import { PropertyAmenitiesObject } from "../../../../core/types/propertyObjects";
 
 const REQUIRED_AMENITIES = [
   { id: "wifi", label: "WiFi", icon: "📶" },
@@ -30,6 +30,11 @@ const ADDITIONAL_AMENITIES = [
   { id: "garden", label: "Garden", icon: "🌳" },
   { id: "rooftop", label: "Rooftop", icon: "🏢" },
 ];
+
+interface StepProps {
+  data: PropertyAmenitiesObject;
+  onUpdate: (updates: Partial<PropertyAmenitiesObject>) => void;
+}
 
 export default function AmenitiesStep({ data, onUpdate }: StepProps) {
   const handleAmenityToggle = (amenityId: string) => {

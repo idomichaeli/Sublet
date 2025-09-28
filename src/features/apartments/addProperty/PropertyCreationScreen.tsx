@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -28,6 +28,8 @@ import AvailabilityStep from "./steps/PropertyAvailabilityStep";
 import PricingStep from "./steps/PropertyPricingStep";
 import ReviewStep from "./steps/PropertyReviewStep";
 import { PropertyData } from "./types/PropertyCreationData";
+import { usePropertyManager } from "../../../core/services/propertyManager";
+import { PropertyObject } from "../../../core/types/propertyObjects";
 
 const STEPS = [
   "Property Category",
@@ -42,56 +44,18 @@ const STEPS = [
 
 export default function AddPropertyScreen({ navigation }: any) {
   const [currentStep, setCurrentStep] = useState(0);
-  const [propertyData, setPropertyData] = useState<PropertyData>({
-    // Property Category
-    propertyCategory: undefined,
+  const [validationKey, setValidationKey] = useState(0); // Force re-render for validation
 
-    // Property Type
-    propertyType: undefined,
+  // Initialize property manager
+  const propertyManager = usePropertyManager();
 
-    // Contact Info
-    name: "",
-    email: "",
-    phone: "",
+  // Initialize new property when component mounts
+  useEffect(() => {
+    propertyManager.initializeNewProperty();
+  }, []);
 
-    // Location
-    location: undefined,
-    area: undefined,
-    street: "",
-    streetNumber: "",
-    floor: "",
-    apartmentNumber: "",
-    postcode: "",
-    hasShelter: false,
-    shelterLocation: undefined,
-    shelterDistance: undefined,
-
-    // Basic Details
-    bedrooms: 1,
-    customBedrooms: undefined,
-    isOneBedroomLivingRoom: false,
-    bathrooms: 1,
-    customBathrooms: undefined,
-    renovation: "new",
-    size: 50,
-    additionalRooms: [],
-
-    // Amenities
-    amenities: [],
-
-    // Photos
-    photos: [],
-
-    // Availability
-    availableFrom: undefined,
-    availableTo: undefined,
-    startDateFlexibility: undefined,
-    endDateFlexibility: undefined,
-
-    // Pricing
-    price: 1200,
-    pricingFrequency: "month",
-  });
+  // Get current property data
+  const propertyData = propertyManager.getCurrentProperty();
 
   // Helper function to calculate total rooms
   const calculateTotalRooms = () => {
@@ -117,8 +81,9 @@ export default function AddPropertyScreen({ navigation }: any) {
     return totalRooms;
   };
 
-  const updateData = (updates: Partial<PropertyData>) => {
-    setPropertyData((prev) => ({ ...prev, ...updates }));
+  const updateData = (updates: Partial<PropertyObject>) => {
+    propertyManager.updateProperty(updates);
+    setValidationKey((prev) => prev + 1); // Force re-render to update button state
   };
 
   const validateCurrentStep = () => {
@@ -204,24 +169,42 @@ export default function AddPropertyScreen({ navigation }: any) {
   };
 
   const saveDraft = () => {
-    Alert.alert(
-      "Draft Saved",
-      "Your property listing has been saved as a draft.",
-      [{ text: "OK" }]
-    );
+    const result = propertyManager.saveDraft();
+    if (result.success) {
+      Alert.alert(
+        "Draft Saved",
+        "Your property listing has been saved as a draft.",
+        [{ text: "OK" }]
+      );
+    } else {
+      Alert.alert(
+        "Save Failed",
+        result.errors?.join(", ") || "Failed to save draft",
+        [{ text: "OK" }]
+      );
+    }
   };
 
   const publishProperty = () => {
-    Alert.alert(
-      "Property Published!",
-      "Your property listing is now live and visible to renters.",
-      [
-        {
-          text: "OK",
-          onPress: () => navigation.goBack(),
-        },
-      ]
-    );
+    const result = propertyManager.publishProperty();
+    if (result.success) {
+      Alert.alert(
+        "Property Published!",
+        "Your property listing is now live and visible to renters.",
+        [
+          {
+            text: "OK",
+            onPress: () => navigation.goBack(),
+          },
+        ]
+      );
+    } else {
+      Alert.alert(
+        "Publish Failed",
+        result.errors?.join(", ") || "Failed to publish property",
+        [{ text: "OK" }]
+      );
+    }
   };
 
   const renderCurrentStep = () => {
@@ -328,6 +311,7 @@ export default function AddPropertyScreen({ navigation }: any) {
 
         {currentStep < STEPS.length - 1 ? (
           <Button
+            key={`next-${validationKey}`} // Force re-render when validation changes
             title="Next"
             onPress={nextStep}
             variant={validateCurrentStep() ? "primary" : "tertiary"}

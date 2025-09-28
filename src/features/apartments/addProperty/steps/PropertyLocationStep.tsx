@@ -17,12 +17,17 @@ import {
   borderRadius,
   shadows,
 } from "../../../../shared/constants/tokens";
-import { StepProps } from "../types/PropertyCreationData";
+import { PropertyLocationObject } from "../../../../core/types/propertyObjects";
 import {
   TelAvivLocation,
   TEL_AVIV_LOCATIONS,
 } from "../../../../shared/constants/locations";
 import * as Location from "expo-location";
+
+interface StepProps {
+  data: PropertyLocationObject;
+  onUpdate: (updates: Partial<PropertyLocationObject>) => void;
+}
 
 export default function LocationStep({ data, onUpdate }: StepProps) {
   const [isGeocoding, setIsGeocoding] = useState(false);
@@ -31,6 +36,22 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
   const [pulseAnim] = useState(new Animated.Value(1));
   const [streetSuggestions, setStreetSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Local state for form inputs
+  const [localStreet, setLocalStreet] = useState(data.street);
+  const [localStreetNumber, setLocalStreetNumber] = useState(data.streetNumber);
+  const [localFloor, setLocalFloor] = useState(data.floor);
+  const [localApartmentNumber, setLocalApartmentNumber] = useState(
+    data.apartmentNumber
+  );
+  const [localPostcode, setLocalPostcode] = useState(data.postcode);
+  const [localHasShelter, setLocalHasShelter] = useState(data.hasShelter);
+  const [localShelterLocation, setLocalShelterLocation] = useState(
+    data.shelterLocation
+  );
+  const [localShelterDistance, setLocalShelterDistance] = useState(
+    data.shelterDistance?.toString() || ""
+  );
 
   // Common Tel Aviv street names for autocomplete
   const TEL_AVIV_STREETS = [
@@ -707,7 +728,8 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
   };
 
   const handleStreetChange = (street: string) => {
-    onUpdate({ street });
+    setLocalStreet(street);
+    onUpdate({ street }); // Update immediately for validation
 
     // Generate suggestions based on input
     if (street.length > 1) {
@@ -724,33 +746,40 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
   };
 
   const handleStreetNumberChange = (number: string) => {
-    onUpdate({ streetNumber: number });
+    setLocalStreetNumber(number);
+    onUpdate({ streetNumber: number }); // Update immediately for validation
   };
 
   const handleStreetBlur = () => {
     setShowSuggestions(false);
-    if (data.street && data.streetNumber) {
-      detectAreaFromAddress(data.street, data.streetNumber);
+    // Trigger area detection when user finishes typing
+    if (localStreet && localStreetNumber) {
+      detectAreaFromAddress(localStreet, localStreetNumber);
     }
   };
 
   const handleSuggestionSelect = (suggestion: string) => {
+    setLocalStreet(suggestion);
     onUpdate({ street: suggestion });
     setShowSuggestions(false);
     setStreetSuggestions([]);
   };
 
   const handleStreetNumberBlur = () => {
-    if (data.street && data.streetNumber) {
-      detectAreaFromAddress(data.street, data.streetNumber);
+    // Trigger area detection when user finishes typing
+    if (localStreet && localStreetNumber) {
+      detectAreaFromAddress(localStreet, localStreetNumber);
     }
   };
 
   const handleShelterChange = (hasShelter: boolean) => {
+    setLocalHasShelter(hasShelter);
     onUpdate({ hasShelter });
     setShowShelterOptions(hasShelter);
 
     if (!hasShelter) {
+      setLocalShelterLocation(undefined);
+      setLocalShelterDistance("");
       onUpdate({
         shelterLocation: undefined,
         shelterDistance: undefined,
@@ -761,9 +790,11 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
   const handleShelterLocationChange = (
     location: "in_apartment" | "in_floor" | "in_building" | "other"
   ) => {
+    setLocalShelterLocation(location);
     onUpdate({ shelterLocation: location });
 
     if (location !== "other") {
+      setLocalShelterDistance("");
       onUpdate({ shelterDistance: undefined });
     }
   };
@@ -785,7 +816,7 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
               <View style={styles.suggestionContainer}>
                 <TextInput
                   style={styles.textInput}
-                  value={data.street}
+                  value={localStreet}
                   onChangeText={handleStreetChange}
                   onFocus={() => setFocusedInput("street")}
                   onBlur={() => {
@@ -817,7 +848,7 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
               <Text style={styles.fieldLabel}>Number</Text>
               <TextInput
                 style={styles.textInput}
-                value={data.streetNumber}
+                value={localStreetNumber}
                 onChangeText={handleStreetNumberChange}
                 onFocus={() => setFocusedInput("number")}
                 onBlur={() => {
@@ -838,8 +869,11 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
               <Text style={styles.fieldLabel}>Floor</Text>
               <TextInput
                 style={styles.textInput}
-                value={data.floor}
-                onChangeText={(floor) => onUpdate({ floor })}
+                value={localFloor}
+                onChangeText={(floor) => {
+                  setLocalFloor(floor);
+                  onUpdate({ floor }); // Update immediately for validation
+                }}
                 onFocus={() => setFocusedInput("floor")}
                 onBlur={() => setFocusedInput(null)}
                 placeholder="Floor number"
@@ -853,10 +887,11 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
               <Text style={styles.fieldLabel}>Apartment</Text>
               <TextInput
                 style={styles.textInput}
-                value={data.apartmentNumber}
-                onChangeText={(apartmentNumber) =>
-                  onUpdate({ apartmentNumber })
-                }
+                value={localApartmentNumber}
+                onChangeText={(apartmentNumber) => {
+                  setLocalApartmentNumber(apartmentNumber);
+                  onUpdate({ apartmentNumber }); // Update immediately for validation
+                }}
                 onFocus={() => setFocusedInput("apartment")}
                 onBlur={() => setFocusedInput(null)}
                 placeholder="Apartment number"
@@ -895,8 +930,11 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
             <Text style={styles.fieldLabel}>Postal Code</Text>
             <TextInput
               style={styles.textInput}
-              value={data.postcode}
-              onChangeText={(postcode) => onUpdate({ postcode })}
+              value={localPostcode}
+              onChangeText={(postcode) => {
+                setLocalPostcode(postcode);
+                onUpdate({ postcode }); // Update immediately for validation
+              }}
               onFocus={() => setFocusedInput("postcode")}
               onBlur={() => setFocusedInput(null)}
               placeholder="Enter postal code"
@@ -927,14 +965,14 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
             <TouchableOpacity
               style={[
                 styles.shelterOption,
-                data.hasShelter === true && styles.shelterOptionSelected,
+                localHasShelter === true && styles.shelterOptionSelected,
               ]}
               onPress={() => handleShelterChange(true)}
             >
               <Text
                 style={[
                   styles.shelterOptionText,
-                  data.hasShelter === true && styles.shelterOptionTextSelected,
+                  localHasShelter === true && styles.shelterOptionTextSelected,
                 ]}
               >
                 Yes
@@ -944,14 +982,14 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
             <TouchableOpacity
               style={[
                 styles.shelterOption,
-                data.hasShelter === false && styles.shelterOptionSelected,
+                localHasShelter === false && styles.shelterOptionSelected,
               ]}
               onPress={() => handleShelterChange(false)}
             >
               <Text
                 style={[
                   styles.shelterOptionText,
-                  data.hasShelter === false && styles.shelterOptionTextSelected,
+                  localHasShelter === false && styles.shelterOptionTextSelected,
                 ]}
               >
                 No
@@ -969,7 +1007,7 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
               <TouchableOpacity
                 style={[
                   styles.shelterLocationOption,
-                  data.shelterLocation === "in_apartment" &&
+                  localShelterLocation === "in_apartment" &&
                     styles.shelterLocationOptionSelected,
                 ]}
                 onPress={() => handleShelterLocationChange("in_apartment")}
@@ -977,7 +1015,7 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
                 <Text
                   style={[
                     styles.shelterLocationText,
-                    data.shelterLocation === "in_apartment" &&
+                    localShelterLocation === "in_apartment" &&
                       styles.shelterLocationTextSelected,
                   ]}
                 >
@@ -988,7 +1026,7 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
               <TouchableOpacity
                 style={[
                   styles.shelterLocationOption,
-                  data.shelterLocation === "in_floor" &&
+                  localShelterLocation === "in_floor" &&
                     styles.shelterLocationOptionSelected,
                 ]}
                 onPress={() => handleShelterLocationChange("in_floor")}
@@ -996,7 +1034,7 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
                 <Text
                   style={[
                     styles.shelterLocationText,
-                    data.shelterLocation === "in_floor" &&
+                    localShelterLocation === "in_floor" &&
                       styles.shelterLocationTextSelected,
                   ]}
                 >
@@ -1007,7 +1045,7 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
               <TouchableOpacity
                 style={[
                   styles.shelterLocationOption,
-                  data.shelterLocation === "in_building" &&
+                  localShelterLocation === "in_building" &&
                     styles.shelterLocationOptionSelected,
                 ]}
                 onPress={() => handleShelterLocationChange("in_building")}
@@ -1015,7 +1053,7 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
                 <Text
                   style={[
                     styles.shelterLocationText,
-                    data.shelterLocation === "in_building" &&
+                    localShelterLocation === "in_building" &&
                       styles.shelterLocationTextSelected,
                   ]}
                 >
@@ -1026,7 +1064,7 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
               <TouchableOpacity
                 style={[
                   styles.shelterLocationOption,
-                  data.shelterLocation === "other" &&
+                  localShelterLocation === "other" &&
                     styles.shelterLocationOptionSelected,
                 ]}
                 onPress={() => handleShelterLocationChange("other")}
@@ -1034,7 +1072,7 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
                 <Text
                   style={[
                     styles.shelterLocationText,
-                    data.shelterLocation === "other" &&
+                    localShelterLocation === "other" &&
                       styles.shelterLocationTextSelected,
                   ]}
                 >
@@ -1043,21 +1081,22 @@ export default function LocationStep({ data, onUpdate }: StepProps) {
               </TouchableOpacity>
 
               {/* Distance Input for "Other" option */}
-              {data.shelterLocation === "other" && (
+              {localShelterLocation === "other" && (
                 <View style={styles.distanceInputContainer}>
                   <Text style={styles.fieldLabel}>
                     How far is the closest shelter? (in meters)
                   </Text>
                   <TextInput
                     style={styles.textInput}
-                    value={data.shelterDistance?.toString() || ""}
-                    onChangeText={(distance) =>
+                    value={localShelterDistance}
+                    onChangeText={(distance) => {
+                      setLocalShelterDistance(distance);
                       onUpdate({
                         shelterDistance: distance
                           ? parseInt(distance)
                           : undefined,
-                      })
-                    }
+                      }); // Update immediately for validation
+                    }}
                     onFocus={() => setFocusedInput("distance")}
                     onBlur={() => setFocusedInput(null)}
                     placeholder="Enter distance in meters"

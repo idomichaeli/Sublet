@@ -9,7 +9,12 @@ import {
 } from "../../../../shared/constants/tokens";
 import Card from "../../../../shared/components/ui/Card";
 import Slider from "../../../../shared/components/ui/Slider";
-import { StepProps } from "../types/PropertyCreationData";
+import { PropertyPricingObject } from "../../../../core/types/propertyObjects";
+
+interface StepProps {
+  data: PropertyPricingObject;
+  onUpdate: (updates: Partial<PropertyPricingObject>) => void;
+}
 
 export default function PricingStep({ data, onUpdate }: StepProps) {
   const colorScheme = useColorScheme();

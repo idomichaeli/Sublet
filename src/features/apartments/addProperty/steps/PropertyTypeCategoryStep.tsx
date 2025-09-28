@@ -14,7 +14,10 @@ import {
   borderRadius,
   shadows,
 } from "../../../../shared/constants/tokens";
-import { StepProps, PropertyCategory } from "../types/PropertyCreationData";
+import {
+  PropertyCategoryObject,
+  PropertyCategory,
+} from "../../../../core/types/propertyObjects";
 import PropertyTypeSelectionBottomSheet from "../components/PropertyTypeSelectionBottomSheet";
 
 const PROPERTY_CATEGORIES = [
@@ -29,6 +32,11 @@ const PROPERTY_CATEGORIES = [
     icon: "apartment",
   },
 ];
+
+interface StepProps {
+  data: PropertyCategoryObject;
+  onUpdate: (updates: Partial<PropertyCategoryObject>) => void;
+}
 
 export default function PropertyCategoryStep({ data, onUpdate }: StepProps) {
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
