@@ -42,7 +42,12 @@ export default function SavedPropertiesScreen() {
     setShowRequestSheet(true);
   };
 
-  const handleSubmitRequest = (message: string) => {
+  const handleSubmitRequest = (requestData: {
+    message: string;
+    selectedPrice: number;
+    startDate: string;
+    endDate: string;
+  }) => {
     if (selectedProperty) {
       addRequest({
         id: Date.now().toString(),
@@ -50,12 +55,10 @@ export default function SavedPropertiesScreen() {
         renterId: "current-user",
         ownerId: "property-owner",
         status: "pending",
-        message,
+        message: requestData.message,
         requestedDates: {
-          checkIn: new Date().toISOString(),
-          checkOut: new Date(
-            Date.now() + 30 * 24 * 60 * 60 * 1000
-          ).toISOString(),
+          checkIn: requestData.startDate,
+          checkOut: requestData.endDate,
         },
         guests: 1,
         createdAt: new Date().toISOString(),
@@ -90,6 +93,7 @@ export default function SavedPropertiesScreen() {
                   <SwipeCard data={apartment} />
                   <View style={styles.actions}>
                     <RequestButton
+                      propertyId={apartment.id}
                       onPress={() => handleMakeRequest(apartment.id)}
                     />
                   </View>

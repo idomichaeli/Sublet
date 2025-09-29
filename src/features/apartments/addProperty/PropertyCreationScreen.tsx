@@ -29,6 +29,7 @@ import PricingStep from "./steps/PropertyPricingStep";
 import ReviewStep from "./steps/PropertyReviewStep";
 import { PropertyData } from "./types/PropertyCreationData";
 import { usePropertyManager } from "../../../core/services/propertyManager";
+import { useAuthStore } from "../../../core/services/authenticationStore";
 import { PropertyObject } from "../../../core/types/propertyObjects";
 
 const STEPS = [
@@ -46,8 +47,12 @@ export default function AddPropertyScreen({ navigation }: any) {
   const [currentStep, setCurrentStep] = useState(0);
   const [validationKey, setValidationKey] = useState(0); // Force re-render for validation
 
-  // Initialize property manager
-  const propertyManager = usePropertyManager();
+  // Get current user for owner ID
+  const { user } = useAuthStore();
+  const ownerId = user?.id || "current-owner";
+
+  // Initialize property manager with owner ID
+  const propertyManager = usePropertyManager(ownerId);
 
   // Initialize new property when component mounts
   useEffect(() => {

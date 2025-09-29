@@ -80,7 +80,7 @@ export const validatePropertyLocation = (location: PropertyLocationObject): { is
 };
 
 // Property location utilities
-export const getPropertyAddress = (location: PropertyLocationObject): string => {
+export const getPropertyLocationAddress = (location: PropertyLocationObject): string => {
   const parts = [location.street, location.streetNumber];
   if (location.floor) parts.push(`Floor ${location.floor}`);
   if (location.apartmentNumber) parts.push(`Apt ${location.apartmentNumber}`);

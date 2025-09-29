@@ -14,6 +14,7 @@ import {
   borderRadius,
   shadows,
 } from "../../../shared/constants/tokens";
+import LogoIcon from "../../../shared/components/ui/LogoIcon";
 
 type ViewMode = "list" | "swipe";
 
@@ -35,32 +36,35 @@ export default function HomeHeader({
   return (
     <View style={styles.header}>
       <View style={styles.headerTop}>
-        {/* Left: Discover title with gradient */}
+        {/* Left: Logo and Discover title with gradient */}
         <View style={styles.titleContainer}>
-          <Svg width="120" height="32" viewBox="0 0 120 32">
-            <Defs>
-              <LinearGradient
-                id="titleGradient"
-                x1="0%"
-                y1="0%"
-                x2="100%"
-                y2="0%"
+          <View style={styles.logoAndTitle}>
+            <LogoIcon size={100} />
+            <Svg width="120" height="32" viewBox="0 0 120 32">
+              <Defs>
+                <LinearGradient
+                  id="titleGradient"
+                  x1="0%"
+                  y1="0%"
+                  x2="100%"
+                  y2="0%"
+                >
+                  <Stop offset="0%" stopColor="#4CAF50" />
+                  <Stop offset="100%" stopColor="#FF9800" />
+                </LinearGradient>
+              </Defs>
+              <SvgText
+                x="0"
+                y="24"
+                fontSize="24"
+                fontWeight="700"
+                fontFamily="System"
+                fill="url(#titleGradient)"
               >
-                <Stop offset="0%" stopColor="#4CAF50" />
-                <Stop offset="100%" stopColor="#FF9800" />
-              </LinearGradient>
-            </Defs>
-            <SvgText
-              x="0"
-              y="24"
-              fontSize="24"
-              fontWeight="700"
-              fontFamily="System"
-              fill="url(#titleGradient)"
-            >
-              Discover
-            </SvgText>
-          </Svg>
+                Discover
+              </SvgText>
+            </Svg>
+          </View>
         </View>
 
         {/* Center: Count */}
@@ -104,6 +108,11 @@ const styles = StyleSheet.create({
   titleContainer: {
     alignItems: "center",
     justifyContent: "center",
+  },
+  logoAndTitle: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.none,
   },
   countText: {
     ...textStyles.body,

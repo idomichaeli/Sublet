@@ -6,6 +6,7 @@ import {
   textStyles,
   borderRadius,
 } from "../../../shared/constants/tokens";
+import LogoIcon from "../../../shared/components/ui/LogoIcon";
 
 interface TinderHeaderProps {
   remainingCards: number;
@@ -21,7 +22,10 @@ export default function TinderHeader({
   return (
     <View style={styles.header}>
       <View style={styles.leftSection}>
-        <Text style={styles.title}>Discover</Text>
+        <View style={styles.logoAndTitle}>
+          <LogoIcon size={100} />
+          <Text style={styles.title}>Discover</Text>
+        </View>
       </View>
 
       <View style={styles.rightSection}>
@@ -57,6 +61,11 @@ const styles = StyleSheet.create({
   },
   leftSection: {
     flex: 1,
+  },
+  logoAndTitle: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.none,
   },
   title: {
     ...textStyles.h2,

@@ -8,5 +8,5 @@ export * from './features';
 export { AppNavigator } from './app/components';
 
 // Re-export specific components to avoid conflicts
-export { default as PropertyCard } from './shared/components/ui/PropertyCard';
-export { default as ApartmentCard } from './shared/components/ui/ApartmentCard';
+export { default as PropertyObjectCard } from './features/apartments/components/PropertyObjectCard';
+export { default as GenericCard } from './shared/components/ui/GenericCard';

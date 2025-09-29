@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -10,46 +10,51 @@ import {
 import RenterCard from "../components/PropertyRenterCard";
 import PropertyStory from "../components/PropertyOwnerStory";
 import EmptyState from "../../../shared/components/ui/EmptyState";
+import { useOwnerPropertyList } from "../../../core/services/ownerPropertyListManager";
+import { OwnerProperty } from "../../../core/types/ownerPropertyList";
 
 type FilterType = "all" | "pending" | "accepted" | "rejected";
 
 export default function InterestedRentersScreen({ navigation }: any) {
-  const [selectedProperty, setSelectedProperty] = useState<string>("1");
+  const [selectedProperty, setSelectedProperty] = useState<string>("");
+  const [ownerProperties, setOwnerProperties] = useState<OwnerProperty[]>([]);
+  const ownerPropertyList = useOwnerPropertyList("current-owner");
 
-  const ownerProperties = [
-    {
-      id: "1",
-      title: "Downtown Apartment",
-      imageUrl:
-        "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400",
-      price: 150,
-      location: "Tel Aviv",
-    },
-    {
-      id: "2",
-      title: "Modern Studio",
-      imageUrl:
-        "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400",
-      price: 120,
-      location: "Haifa",
-    },
-    {
-      id: "3",
-      title: "Luxury Penthouse",
-      imageUrl:
-        "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400",
-      price: 300,
-      location: "Jerusalem",
-    },
-    {
-      id: "4",
-      title: "Cozy 2BR",
-      imageUrl:
-        "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400",
-      price: 180,
-      location: "Ramat Gan",
-    },
-  ];
+  // Load owner properties on component mount
+  useEffect(() => {
+    const loadProperties = async () => {
+      try {
+        if (ownerPropertyList.reloadFromStorage) {
+          await ownerPropertyList.reloadFromStorage();
+        }
+        const publishedProperties = ownerPropertyList.getPublishedProperties();
+        setOwnerProperties(publishedProperties);
+
+        // Set first property as selected if available
+        if (publishedProperties.length > 0 && !selectedProperty) {
+          setSelectedProperty(publishedProperties[0].id);
+        }
+      } catch (error) {
+        console.error("Failed to load properties:", error);
+      }
+    };
+
+    loadProperties();
+  }, []);
+
+  // Convert OwnerProperty to PropertyStory format
+  const getPropertyStoryData = (property: OwnerProperty) => ({
+    id: property.id,
+    title: `${
+      property.propertyCategory === "house" ? "House" : "Apartment"
+    } • ${property.area?.name || "Tel Aviv"}`,
+    imageUrl:
+      property.photos && property.photos.length > 0
+        ? property.photos[0]
+        : undefined,
+    price: property.price,
+    location: property.area?.name || "Tel Aviv",
+  });
 
   const interestedRenters = [
     {
@@ -144,19 +149,25 @@ export default function InterestedRentersScreen({ navigation }: any) {
 
   const filteredRenters = interestedRenters.filter((renter) => {
     // Filter renters based on the selected property
-    // For now, we'll use a simple mapping based on property titles
-    const propertyMapping: { [key: string]: string[] } = {
-      "1": ["Downtown Apartment", "2BR Apartment, Tel Aviv"], // Downtown Apartment
-      "2": ["Modern Studio, Haifa"], // Modern Studio
-      "3": ["Luxury Penthouse, Jerusalem"], // Luxury Penthouse
-      "4": ["2BR Apartment, Tel Aviv", "Cozy 2BR"], // Cozy 2BR
-    };
+    if (!selectedProperty) return false;
 
-    const selectedPropertyTitles = propertyMapping[selectedProperty] || [];
-    return selectedPropertyTitles.some((title) =>
+    // Get the selected property
+    const selectedProp = ownerProperties.find((p) => p.id === selectedProperty);
+    if (!selectedProp) return false;
+
+    // Create property identifier for matching
+    const propertyIdentifier = `${
+      selectedProp.propertyCategory === "house" ? "House" : "Apartment"
+    } • ${selectedProp.area?.name || "Tel Aviv"}`;
+
+    // Match renters to the selected property
+    return (
       renter.propertyTitle
         .toLowerCase()
-        .includes(title.toLowerCase().split(",")[0])
+        .includes(propertyIdentifier.toLowerCase().split("•")[0].trim()) ||
+      renter.propertyTitle
+        .toLowerCase()
+        .includes(selectedProp.area?.name?.toLowerCase() || "tel aviv")
     );
   });
 
@@ -189,13 +200,9 @@ export default function InterestedRentersScreen({ navigation }: any) {
     />
   );
 
-  const renderPropertyStory = ({
-    item,
-  }: {
-    item: (typeof ownerProperties)[0];
-  }) => (
+  const renderPropertyStory = ({ item }: { item: OwnerProperty }) => (
     <PropertyStory
-      {...item}
+      {...getPropertyStoryData(item)}
       isActive={selectedProperty === item.id}
       onPress={() => setSelectedProperty(item.id)}
     />
@@ -209,7 +216,11 @@ export default function InterestedRentersScreen({ navigation }: any) {
         <Text style={styles.headerSubtitle}>
           {filteredRenters.length} renter
           {filteredRenters.length !== 1 ? "s" : ""} interested in{" "}
-          {ownerProperties.find((p) => p.id === selectedProperty)?.title}
+          {ownerProperties.find((p) => p.id === selectedProperty)
+            ? getPropertyStoryData(
+                ownerProperties.find((p) => p.id === selectedProperty)!
+              ).title
+            : "No property selected"}
         </Text>
       </View>
 
@@ -223,7 +234,7 @@ export default function InterestedRentersScreen({ navigation }: any) {
           {ownerProperties.map((property) => (
             <PropertyStory
               key={property.id}
-              {...property}
+              {...getPropertyStoryData(property)}
               isActive={selectedProperty === property.id}
               onPress={() => setSelectedProperty(property.id)}
             />
@@ -246,7 +257,11 @@ export default function InterestedRentersScreen({ navigation }: any) {
             icon="👥"
             title="No interested renters yet"
             subtitle={`No one has applied to ${
-              ownerProperties.find((p) => p.id === selectedProperty)?.title
+              ownerProperties.find((p) => p.id === selectedProperty)
+                ? getPropertyStoryData(
+                    ownerProperties.find((p) => p.id === selectedProperty)!
+                  ).title
+                : "this property"
             } yet. When someone does, they'll show up here!`}
             actionLabel="View Properties"
             onActionPress={() => navigation.navigate("Home")}

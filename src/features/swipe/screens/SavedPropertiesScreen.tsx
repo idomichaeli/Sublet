@@ -86,7 +86,7 @@ export default function FavoritesScreen({ navigation }: any) {
         id: `request-${Date.now()}`,
         propertyId: selectedListing.id,
         renterId: "current-user-id", // TODO: Get from auth context
-        ownerId: selectedListing.ownerId,
+        ownerId: selectedListing.ownerId || "unknown-owner",
         status: "pending" as const,
         message: requestData.message,
         requestedDates: {

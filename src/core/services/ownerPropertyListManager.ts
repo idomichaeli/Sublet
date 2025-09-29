@@ -34,10 +34,18 @@ export class OwnerPropertyListManager {
       const saved = await AsyncStorage.getItem(`owner_properties_${this.ownerId}`);
       if (saved) {
         this.propertyList = JSON.parse(saved);
+        console.log('Loaded properties from storage:', this.propertyList.properties.length);
+      } else {
+        console.log('No saved properties found, using default list');
       }
     } catch (error) {
       console.error('Failed to load property list:', error);
     }
+  }
+
+  // Public method to reload from storage
+  public async reloadFromStorage(): Promise<void> {
+    await this.loadPropertyList();
   }
 
   // Save property list to storage
@@ -321,6 +329,7 @@ export const useOwnerPropertyList = (ownerId: string) => {
     getArchivedProperties: () => manager.getArchivedProperties(),
     getPropertyList: () => manager.getPropertyList(),
     getPropertyStats: () => manager.getPropertyStats(),
+    reloadFromStorage: async () => await manager.reloadFromStorage(),
     
     // Sorting and searching
     sortProperties: (sortBy?: 'date' | 'status', order?: 'asc' | 'desc') => 

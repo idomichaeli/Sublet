@@ -9,7 +9,7 @@ import {
 } from "../../../../shared/constants/tokens";
 import Card from "../../../../shared/components/ui/Card";
 import AnimatedRoomCounter from "../../../../shared/components/ui/AnimatedRoomCounter";
-import { PropertyReviewObject } from "../../../../core/types/propertyObjects";
+import { PropertyObject } from "../../../../core/types/propertyObjects";
 
 const AMENITIES = [
   { id: "furnished", label: "Furnished", icon: "🛋️" },
@@ -30,8 +30,8 @@ const AMENITIES = [
 ];
 
 interface StepProps {
-  data: PropertyReviewObject;
-  onUpdate: (updates: Partial<PropertyReviewObject>) => void;
+  data: PropertyObject;
+  onUpdate: (updates: Partial<PropertyObject>) => void;
 }
 
 export default function ReviewStep({ data, onUpdate }: StepProps) {

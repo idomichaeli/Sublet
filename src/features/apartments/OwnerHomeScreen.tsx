@@ -10,6 +10,7 @@ import {
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
 import {
   colors,
   spacing,
@@ -19,34 +20,63 @@ import {
 } from "../../shared/constants/tokens";
 import { useOwnerPropertyList } from "../../core/services/ownerPropertyListManager";
 import { OwnerProperty } from "../../core/types/ownerPropertyList";
+import MyPropertyCard from "./components/MyPropertyCard";
 
 interface OwnerHomeScreenProps {
-  ownerId: string;
   navigation: any;
+  route?: any;
 }
 
 export default function OwnerHomeScreen({
-  ownerId,
   navigation,
+  route,
 }: OwnerHomeScreenProps) {
   const [refreshing, setRefreshing] = useState(false);
-  const ownerPropertyList = useOwnerPropertyList(ownerId);
+  const [properties, setProperties] = useState<OwnerProperty[]>([]);
+  const ownerPropertyList = useOwnerPropertyList("current-owner");
+
+  const loadProperties = async () => {
+    try {
+      // Force reload from storage to ensure we get the latest data
+      if (ownerPropertyList.reloadFromStorage) {
+        await ownerPropertyList.reloadFromStorage();
+      }
+      const publishedProperties = ownerPropertyList.getPublishedProperties();
+      setProperties(publishedProperties);
+    } catch (error) {
+      console.error("Failed to load properties:", error);
+      // Fallback to current data if reload fails
+      const publishedProperties = ownerPropertyList.getPublishedProperties();
+      setProperties(publishedProperties);
+    }
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);
+    loadProperties();
     // Simulate refresh delay
     setTimeout(() => {
       setRefreshing(false);
     }, 1000);
   };
 
-  const getPropertyStats = () => {
-    return ownerPropertyList.getPropertyStats();
-  };
+  // Load properties when component mounts
+  useEffect(() => {
+    loadProperties();
+  }, []);
 
-  const getPublishedProperties = () => {
-    return ownerPropertyList.getPublishedProperties();
-  };
+  // Refresh properties when screen comes into focus (e.g., returning from add property)
+  useFocusEffect(
+    React.useCallback(() => {
+      loadProperties();
+
+      // Show success message if property was just added
+      if (route?.params?.propertyAdded) {
+        // Clear the parameter to avoid showing the message again
+        navigation.setParams({ propertyAdded: undefined });
+      }
+    }, [route?.params?.propertyAdded])
+  );
 
   const handleDeleteProperty = (propertyId: string, propertyTitle: string) => {
     Alert.alert(
@@ -60,10 +90,12 @@ export default function OwnerHomeScreen({
         {
           text: "Delete",
           style: "destructive",
-          onPress: () => {
-            const result = ownerPropertyList.deleteProperty(propertyId);
+          onPress: async () => {
+            const result = await ownerPropertyList.deleteProperty(propertyId);
             if (result.success) {
               Alert.alert("Success", "Property deleted successfully");
+              // Reload properties to update the UI
+              loadProperties();
             } else {
               Alert.alert(
                 "Error",
@@ -76,8 +108,18 @@ export default function OwnerHomeScreen({
     );
   };
 
-  const stats = getPropertyStats();
-  const publishedProperties = getPublishedProperties();
+  const handleEditProperty = (property: OwnerProperty) => {
+    navigation.navigate("AddProperty", {
+      editMode: true,
+      propertyId: property.id,
+    });
+  };
+
+  const handleViewRenters = (propertyId: string) => {
+    navigation.navigate("InterestedRenters", { propertyId });
+  };
+
+  const stats = ownerPropertyList.getPropertyStats();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -119,9 +161,10 @@ export default function OwnerHomeScreen({
 
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() =>
-              navigation.navigate("OwnerPropertyList", { ownerId })
-            }
+            onPress={() => {
+              // Navigate to a filtered view of all properties
+              console.log("View all properties");
+            }}
           >
             <Text style={styles.actionIcon}>📋</Text>
             <Text style={styles.actionText}>All Properties</Text>
@@ -143,15 +186,16 @@ export default function OwnerHomeScreen({
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Published Properties</Text>
             <TouchableOpacity
-              onPress={() =>
-                navigation.navigate("OwnerPropertyList", { ownerId })
-              }
+              onPress={() => {
+                // Navigate to a filtered view of all properties
+                console.log("View all properties");
+              }}
             >
               <Text style={styles.viewAllText}>View All</Text>
             </TouchableOpacity>
           </View>
 
-          {publishedProperties.length === 0 ? (
+          {properties.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyIcon}>🏠</Text>
               <Text style={styles.emptyTitle}>No Published Properties</Text>
@@ -166,75 +210,30 @@ export default function OwnerHomeScreen({
               </TouchableOpacity>
             </View>
           ) : (
-            publishedProperties.slice(0, 3).map((property) => {
-              const propertyTitle = `${
-                property.propertyCategory === "house" ? "House" : "Apartment"
-              } • ${property.area?.name || "Tel Aviv"}`;
+            properties
+              .slice(0, 3)
+              .reverse()
+              .map((property) => {
+                const propertyTitle = `${
+                  property.propertyCategory === "house" ? "House" : "Apartment"
+                } • ${property.area?.name || "Tel Aviv"}`;
 
-              return (
-                <View key={property.id} style={styles.propertyCard}>
-                  <View style={styles.propertyImageContainer}>
-                    {property.photos.length > 0 ? (
-                      <Image
-                        source={{ uri: property.photos[0] }}
-                        style={styles.propertyImage}
-                        resizeMode="cover"
-                      />
-                    ) : (
-                      <View style={styles.propertyImagePlaceholder}>
-                        <Text style={styles.propertyImagePlaceholderText}>
-                          {property.propertyCategory === "house" ? "🏠" : "🏢"}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-
-                  <View style={styles.propertyInfo}>
-                    <Text style={styles.propertyTitle}>
-                      {property.propertyCategory === "house"
-                        ? "House"
-                        : "Apartment"}{" "}
-                      • {property.area?.name || "Tel Aviv"}
-                    </Text>
-                    <Text style={styles.propertyAddress}>
-                      {property.street} {property.streetNumber}
-                    </Text>
-                    <View style={styles.propertyDetails}>
-                      <Text style={styles.propertyDetail}>
-                        {property.customBedrooms || property.bedrooms} bed
-                      </Text>
-                      <Text style={styles.propertyDetail}>
-                        {property.customBathrooms || property.bathrooms} bath
-                      </Text>
-                      <Text style={styles.propertyDetail}>
-                        {property.size}m²
-                      </Text>
-                    </View>
-                    <Text style={styles.propertyPrice}>
-                      ₪{property.price.toLocaleString()}/month
-                    </Text>
-                  </View>
-
-                  <View style={styles.propertyActions}>
-                    <View style={styles.propertyStats}>
-                      <Text style={styles.statLabel}>Views</Text>
-                      <Text style={styles.statValue}>{property.views}</Text>
-                      <Text style={styles.statLabel}>Inquiries</Text>
-                      <Text style={styles.statValue}>{property.inquiries}</Text>
-                    </View>
-
-                    <TouchableOpacity
-                      style={styles.deleteButton}
-                      onPress={() =>
-                        handleDeleteProperty(property.id, propertyTitle)
-                      }
-                    >
-                      <Text style={styles.deleteButtonText}>🗑️</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              );
-            })
+                return (
+                  <MyPropertyCard
+                    key={property.id}
+                    property={property}
+                    onPress={() => {
+                      // Navigate to property details
+                      navigation.navigate("PropertyDetails", { property });
+                    }}
+                    onEditPress={() => handleEditProperty(property)}
+                    onViewRentersPress={() => handleViewRenters(property.id)}
+                    onDeletePress={() =>
+                      handleDeleteProperty(property.id, propertyTitle)
+                    }
+                  />
+                );
+              })
           )}
         </View>
 

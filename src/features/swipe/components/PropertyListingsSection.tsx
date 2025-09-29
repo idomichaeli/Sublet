@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, FlatList } from "react-native";
 import { colors, spacing, textStyles } from "../../../shared/constants/tokens";
-import ApartmentCard from "../../../shared/components/ui/ApartmentCard";
+import { GenericCard } from "../../../shared/components/ui";
 
 export interface Listing {
   id: string;
@@ -33,13 +33,30 @@ export default function ListingsSection({
   onFavoritePress,
 }: ListingsSectionProps) {
   const renderListing = ({ item }: { item: Listing }) => (
-    <ApartmentCard
-      {...item}
+    <GenericCard
+      id={item.id}
+      title={item.title}
+      subtitle={item.location}
+      imageUrl={item.imageUrl}
+      price={item.price}
+      priceUnit="/night"
+      rating={item.rating}
+      reviewCount={item.reviewCount}
+      status={item.status}
+      stats={[
+        { label: "Bedrooms", value: item.bedrooms, icon: "🛏️" },
+        { label: "Bathrooms", value: item.bathrooms, icon: "🚿" },
+        { label: "Size", value: `${item.size}m²`, icon: "📐" },
+      ]}
       onPress={() => onListingPress(item.id)}
-      onBookPress={() => onBookPress(item.id)}
-      onFavoritePress={() => onFavoritePress(item.id)}
-      showBookButton
-      showFavoriteButton={false}
+      onActionPress={() => onBookPress(item.id)}
+      actionLabel="View Details"
+      showStatus={true}
+      showPrice={true}
+      showRating={true}
+      showStats={true}
+      showActions={true}
+      variant="detailed"
     />
   );
 

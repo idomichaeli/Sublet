@@ -10,10 +10,13 @@ import {
   Dimensions,
   StatusBar,
   Modal,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useAuthStore } from "../../../core/services/authenticationStore";
+import { useOwnerPropertyList } from "../../../core/services/ownerPropertyListManager";
 import {
   colors,
   spacing,
@@ -33,12 +36,14 @@ import PropertyObjectCard from "../components/PropertyObjectCard";
 
 const { width } = Dimensions.get("window");
 
-export default function OwnerHomeScreen({ navigation }: any) {
+export default function OwnerHomeScreen({ navigation, route }: any) {
   const { user } = useAuthStore();
+  const ownerPropertyList = useOwnerPropertyList("current-owner");
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
   const [showPropertyDetails, setShowPropertyDetails] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<any>(null);
+  const [properties, setProperties] = useState<any[]>([]);
 
   useEffect(() => {
     Animated.parallel([
@@ -55,93 +60,42 @@ export default function OwnerHomeScreen({ navigation }: any) {
     ]).start();
   }, []);
 
-  // Mock PropertyObject data for demonstration
-  const properties = [
-    {
-      id: "1",
-      // PropertyObject fields
-      street: "Rothschild Boulevard",
-      streetNumber: "15",
-      floor: "3",
-      apartmentNumber: "12",
-      postcode: "66881",
-      hasShelter: true,
-      isOneBedroomLivingRoom: false,
-      bedrooms: 2,
-      bathrooms: 1,
-      size: 85,
-      renovation: "renovated" as const,
-      price: 4500,
-      pricingFrequency: "month" as const,
-      photos: [
-        "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400",
-      ],
-      amenities: ["wifi", "air_conditioning", "parking"],
-      additionalRooms: [],
-      // Additional fields for display
-      status: "available" as const,
-      views: 128,
-      interests: 23,
-      rating: 4.8,
-      nextBooking: "Dec 20-25",
-    },
-    {
-      id: "2",
-      // PropertyObject fields
-      street: "Herzl Street",
-      streetNumber: "42",
-      floor: "1",
-      apartmentNumber: "5",
-      postcode: "31000",
-      hasShelter: false,
-      isOneBedroomLivingRoom: false,
-      bedrooms: 1,
-      bathrooms: 1,
-      size: 45,
-      renovation: "new" as const,
-      price: 3200,
-      pricingFrequency: "month" as const,
-      photos: [
-        "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400",
-      ],
-      amenities: ["wifi", "balcony"],
-      additionalRooms: [],
-      // Additional fields for display
-      status: "booked" as const,
-      views: 89,
-      interests: 15,
-      rating: 4.6,
-      nextBooking: "Currently booked",
-    },
-    {
-      id: "3",
-      // PropertyObject fields
-      street: "King George Street",
-      streetNumber: "8",
-      floor: "5",
-      apartmentNumber: "20",
-      postcode: "91000",
-      hasShelter: true,
-      isOneBedroomLivingRoom: false,
-      bedrooms: 3,
-      bathrooms: 2,
-      size: 120,
-      renovation: "needs_work" as const,
-      price: 6000,
-      pricingFrequency: "month" as const,
-      photos: [
-        "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400",
-      ],
-      amenities: ["wifi", "air_conditioning", "parking", "elevator"],
-      additionalRooms: [],
-      // Additional fields for display
-      status: "draft" as const,
-      views: 0,
-      interests: 0,
-      rating: 0,
-      nextBooking: "Not published",
-    },
-  ];
+  // Load properties from the property manager
+  const loadProperties = async () => {
+    try {
+      // Force reload from storage to ensure we get the latest data
+      if (ownerPropertyList.reloadFromStorage) {
+        await ownerPropertyList.reloadFromStorage();
+      }
+      const publishedProperties = ownerPropertyList.getPublishedProperties();
+      setProperties(publishedProperties);
+    } catch (error) {
+      console.error("Failed to load properties:", error);
+      // Fallback to current data if reload fails
+      const publishedProperties = ownerPropertyList.getPublishedProperties();
+      setProperties(publishedProperties);
+    }
+  };
+
+  // Load properties when component mounts
+  useEffect(() => {
+    loadProperties();
+  }, []);
+
+  // Refresh properties when screen comes into focus (e.g., returning from add property)
+  useFocusEffect(
+    React.useCallback(() => {
+      loadProperties();
+
+      // Show success message if property was just added
+      if (route?.params?.propertyAdded) {
+        // Clear the parameter to avoid showing the message again
+        navigation.setParams({ propertyAdded: undefined });
+      }
+    }, [route?.params?.propertyAdded])
+  );
+
+  // Properties are now loaded from local storage only
 
   const handleAddProperty = () => {
     navigation.navigate("AddApartment");
@@ -164,18 +118,55 @@ export default function OwnerHomeScreen({ navigation }: any) {
     navigation.navigate("InterestedRenters", { propertyId });
   };
 
-  const renderProperty = ({ item }: { item: (typeof properties)[0] }) => (
-    <PropertyObjectCard
-      property={item}
-      status={item.status}
-      views={item.views}
-      interests={item.interests}
-      rating={item.rating}
-      nextBooking={item.nextBooking}
-      onPress={() => handlePropertyPress(item)}
-      onViewRentersPress={() => handleViewRenters(item.id)}
-    />
-  );
+  const handleDeleteProperty = (propertyId: string, propertyTitle: string) => {
+    Alert.alert(
+      "Delete Property",
+      `Are you sure you want to delete "${propertyTitle}"? This action cannot be undone.`,
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            const result = await ownerPropertyList.deleteProperty(propertyId);
+            if (result.success) {
+              Alert.alert("Success", "Property deleted successfully");
+              // Reload properties to update the UI
+              loadProperties();
+            } else {
+              Alert.alert(
+                "Error",
+                result.errors?.join(", ") || "Failed to delete property"
+              );
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const renderProperty = ({ item }: { item: (typeof properties)[0] }) => {
+    const propertyTitle = `${
+      item.propertyCategory === "house" ? "House" : "Apartment"
+    } • ${item.area?.name || "Tel Aviv"}`;
+
+    return (
+      <PropertyObjectCard
+        property={item}
+        status={item.status}
+        views={item.views}
+        interests={item.interests}
+        rating={item.rating}
+        nextBooking={item.nextBooking}
+        onPress={() => handlePropertyPress(item)}
+        onViewRentersPress={() => handleViewRenters(item.id)}
+        onDeletePress={() => handleDeleteProperty(item.id, propertyTitle)}
+      />
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>

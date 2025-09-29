@@ -1,7 +1,6 @@
 // UI Components
 export { default as AnimatedRoomCounter } from './AnimatedRoomCounter';
 export { default as AnimatedSuccessModal } from './AnimatedSuccessModal';
-export { default as PropertyCard } from './PropertyCard';
 export { default as PropertyAreaStories } from './PropertyAreaStories';
 export { default as BottomSheet } from './BottomSheet';
 export { default as Button } from './Button';
@@ -32,7 +31,6 @@ export { default as GenericActionButton } from './GenericActionButton';
 export { default as GenericSection } from './GenericSection';
 
 // Export types
-export type { ApartmentCardProps } from './ApartmentCard';
 export type { MessageBubbleProps } from './MessageBubble';
 export type { GenericCardProps } from './GenericCard';
 export type { GenericListProps } from './GenericList';

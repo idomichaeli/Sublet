@@ -1,5 +1,16 @@
 // Main property object exports
-export * from './PropertyObject';
+export { 
+  PropertyObject,
+  PropertyCategory,
+  PropertyType,
+  createDefaultPropertyObject,
+  validatePropertyObject,
+  getPropertyDisplayName,
+  getPropertyAddress,
+  getPropertySize,
+  getPropertyPrice,
+  getPropertyRooms
+} from './PropertyObject';
 export * from './PropertyCategoryObject';
 export { 
   PropertyLocationObject,

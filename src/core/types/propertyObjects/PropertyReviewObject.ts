@@ -9,7 +9,10 @@ import { PropertyPricingObject } from './PropertyPricingObject';
 
 // Property Review Object - Step 7 (Final Review)
 export interface PropertyReviewObject extends PropertyObject {
-  // This extends the main PropertyObject to include all data for review
+  // Contact Information
+  name: string;
+  email: string;
+  phone: string;
 }
 
 // Review sections
