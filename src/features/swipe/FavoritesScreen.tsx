@@ -2,16 +2,18 @@ import React from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, spacing, textStyles } from "../../shared/constants/tokens";
-import { useFavoritesStore } from "../../shared/hooks/state/favoritesStore";
-import { mockApartments } from "../../shared/data/mockApartments";
+import { useFavoritesStore } from "../../core/services/savedPropertiesStore";
 import SwipeCard from "./components/SwipeCard";
+import { renterPropertyService } from "../../core/services/renterPropertyService";
+import { SwipeCardData } from "./components/SwipeCard";
+import { useState, useEffect } from "react";
 
 export default function FavoritesScreen() {
   const { favorites } = useFavoritesStore();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const favoriteApartments = mockApartments.filter((apartment) =>
-    favorites.includes(apartment.id)
-  );
+  // Since favorites now contains full SwipeCardData objects directly, we don't need to fetch and filter
+  const favoriteApartments = favorites;
 
   return (
     <SafeAreaView style={styles.container}>

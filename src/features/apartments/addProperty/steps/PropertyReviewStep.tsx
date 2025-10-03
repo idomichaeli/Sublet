@@ -9,25 +9,12 @@ import {
 } from "../../../../shared/constants/tokens";
 import Card from "../../../../shared/components/ui/Card";
 import AnimatedRoomCounter from "../../../../shared/components/ui/AnimatedRoomCounter";
-import { PropertyObject } from "../../../../core/types/propertyObjects";
-
-const AMENITIES = [
-  { id: "furnished", label: "Furnished", icon: "🛋️" },
-  { id: "pet_friendly", label: "Pet-friendly", icon: "🐕" },
-  { id: "ac", label: "Air Conditioning", icon: "❄️" },
-  { id: "parking", label: "Parking", icon: "🚗" },
-  { id: "balcony", label: "Balcony", icon: "🌅" },
-  { id: "elevator", label: "Elevator", icon: "🛗" },
-  { id: "wifi", label: "WiFi", icon: "📶" },
-  { id: "gym", label: "Gym", icon: "💪" },
-  { id: "pool", label: "Pool", icon: "🏊" },
-  { id: "laundry", label: "Laundry", icon: "🧺" },
-  { id: "dishwasher", label: "Dishwasher", icon: "🍽️" },
-  { id: "heating", label: "Heating", icon: "🔥" },
-  { id: "security", label: "Security", icon: "🔒" },
-  { id: "storage", label: "Storage", icon: "📦" },
-  { id: "garden", label: "Garden", icon: "🌳" },
-];
+import {
+  PropertyObject,
+  ALL_AMENITIES,
+  getAmenityDisplay,
+} from "../../../../core/types/propertyObjects";
+import { getRenovationLabel } from "../../../../core/types/propertyObjects/PropertyBasicDetailsObject";
 
 interface StepProps {
   data: PropertyObject;
@@ -35,24 +22,9 @@ interface StepProps {
 }
 
 export default function ReviewStep({ data, onUpdate }: StepProps) {
-  const getRenovationLabel = (renovation: string) => {
-    switch (renovation) {
-      case "new":
-        return "✨ New";
-      case "renovated":
-        return "🛠️ Renovated";
-      case "needs_work":
-        return "🏚️ Needs work";
-      default:
-        return "Unknown";
-    }
-  };
 
   const getSelectedAmenities = () => {
-    return data.amenities
-      .map((id) => AMENITIES.find((a) => a.id === id)?.label)
-      .filter(Boolean)
-      .join(", ");
+    return data.amenities.map((id) => getAmenityDisplay(id)).join(", ");
   };
 
   // Calculate total rooms including bedrooms and living room (additional rooms excluded)

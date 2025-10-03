@@ -24,7 +24,7 @@ export const RENOVATION_STATUSES = [
   },
   {
     id: "needs_work" as const,
-    label: "🏚️ Needs work",
+    label: "🏚️ Basic Condition",
     description: "Property that needs renovation",
   },
 ];
@@ -48,6 +48,12 @@ export const ADDITIONAL_ROOMS = [
 
 // All available rooms
 export const ALL_ROOMS = [...SPECIFIC_ROOMS, ...ADDITIONAL_ROOMS];
+
+// Bedroom count options
+export const BEDROOM_COUNTS = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6];
+
+// Bathroom count options
+export const BATHROOM_COUNTS = [1, 2, 3];
 
 // Default property basic details object
 export const createDefaultPropertyBasicDetailsObject = (): PropertyBasicDetailsObject => ({

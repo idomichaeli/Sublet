@@ -1,7 +1,9 @@
 import { PropertyObject } from './PropertyObject';
 import { PropertyCategoryObject } from './PropertyCategoryObject';
 import { PropertyLocationObject } from './PropertyLocationObject';
-import { PropertyBasicDetailsObject } from './PropertyBasicDetailsObject';
+import { PropertyBasicDetailsObject, getRenovationLabel } from './PropertyBasicDetailsObject';
+import { REQUIRED_AMENITIES } from './PropertyAmenitiesObject';
+import { getPropertyTypeLabel } from './PropertyCategoryObject';
 import { PropertyAmenitiesObject } from './PropertyAmenitiesObject';
 import { PropertyPhotosObject } from './PropertyPhotosObject';
 import { PropertyAvailabilityObject } from './PropertyAvailabilityObject';
@@ -144,7 +146,7 @@ export const validatePropertyReview = (review: PropertyReviewObject): { isValid:
   if (review.size < 30) errors.push("Property size must be at least 30m²");
 
   // Amenities validation
-  const requiredAmenityIds = ["wifi", "ac", "elevator", "furnished", "pet_friendly", "smoking_allowed", "accessible", "none"];
+  const requiredAmenityIds = REQUIRED_AMENITIES.map(a => a.id);
   const hasRequiredAmenity = review.amenities.some(amenityId => requiredAmenityIds.includes(amenityId));
   if (!hasRequiredAmenity) errors.push("At least one essential amenity is required");
 
@@ -168,8 +170,7 @@ export const validatePropertyReview = (review: PropertyReviewObject): { isValid:
 // Property review utilities
 export const getPropertySummary = (review: PropertyReviewObject): string => {
   const category = review.propertyCategory === "house" ? "House" : "Apartment";
-  const type = review.propertyType === "entire_place" ? "Entire Place" : 
-               review.propertyType === "room" ? "Room" : "Shared Room";
+  const type = review.propertyType ? getPropertyTypeLabel(review.propertyType) : "Unknown";
   const bedrooms = review.customBedrooms || review.bedrooms;
   const bathrooms = review.customBathrooms || review.bathrooms;
   
@@ -225,15 +226,9 @@ export const getPropertyDetails = (review: PropertyReviewObject): { rooms: strin
   }
   rooms.push(`${bathrooms} bathroom${bathrooms !== 1 ? "s" : ""}`);
 
-  const renovationLabels = {
-    new: "✨ New",
-    renovated: "🛠️ Renovated",
-    needs_work: "🏚️ Needs work",
-  };
-
   return {
     rooms: rooms.join(" • "),
-    renovation: renovationLabels[review.renovation] || "Unknown",
+    renovation: getRenovationLabel(review.renovation),
     additionalRooms: review.additionalRooms?.join(", ") || "None",
   };
 };

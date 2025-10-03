@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -13,7 +14,8 @@ import {
   textStyles,
   borderRadius,
 } from "../../shared/constants/tokens";
-import { mockApartments } from "../../shared/data/mockApartments";
+import { renterPropertyService } from "../../core/services/renterPropertyService";
+import { SwipeCardData } from "./components/SwipeCard";
 
 interface ListingDetailsScreenProps {
   route: {
@@ -29,7 +31,39 @@ export default function ListingDetailsScreen({
   navigation,
 }: ListingDetailsScreenProps) {
   const { listingId } = route.params;
-  const listing = mockApartments.find((apt) => apt.id === listingId);
+  const [listing, setListing] = useState<SwipeCardData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadPropertyDetails();
+  }, [listingId]);
+
+  const loadPropertyDetails = async () => {
+    try {
+      setIsLoading(true);
+
+      // Get property details from real API
+      const properties =
+        await renterPropertyService.getAllPublishedProperties();
+      const property = properties.find((apt) => apt.id === listingId);
+      setListing(property || null);
+    } catch (error) {
+      console.error("Error loading property details:", error);
+      setListing(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (!listing) {
     return (
@@ -54,7 +88,14 @@ export default function ListingDetailsScreen({
         </View>
 
         <View style={styles.imageContainer}>
-          <Text style={styles.imagePlaceholder}>📷</Text>
+          {listing.imageUrl ? (
+            <Image
+              source={{ uri: listing.imageUrl }}
+              style={styles.propertyImage}
+            />
+          ) : (
+            <Text style={styles.imagePlaceholder}>📷</Text>
+          )}
         </View>
 
         <View style={styles.details}>
@@ -78,7 +119,9 @@ export default function ListingDetailsScreen({
           </View>
 
           <Text style={styles.description}>
-            Beautiful apartment in {listing.location}
+            {listing.ownerId
+              ? `Beautiful property in ${listing.location}. This property is managed by a verified owner.`
+              : `Beautiful apartment in ${listing.location}`}
           </Text>
 
           <View style={styles.amenities}>
@@ -135,6 +178,11 @@ const styles = StyleSheet.create({
   imagePlaceholder: {
     fontSize: 48,
     color: colors.neutral[400],
+  },
+  propertyImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
   },
   details: {
     padding: spacing.lg,

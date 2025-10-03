@@ -1,2 +1,2 @@
 // Swipe types exports
-export * from './PropertyFilterData';
+export * from './FilterData';

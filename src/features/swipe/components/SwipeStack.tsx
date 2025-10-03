@@ -7,6 +7,7 @@ import {
   Dimensions,
 } from "react-native";
 import SwipeCard, { SwipeCardData } from "./SwipeCard";
+import { spacing } from "../../../shared/constants/tokens";
 
 const { width: screenWidth } = Dimensions.get("window");
 
@@ -191,14 +192,7 @@ export default function SwipeStack({
 
   return (
     <View style={styles.container}>
-      {nextCard && (
-        <View style={styles.nextCard}>
-          <SwipeCard
-            data={nextCard}
-            onMoreInfoPress={() => onSwipeUp(nextCard)}
-          />
-        </View>
-      )}
+      {/* Current card - interactive */}
       <Animated.View
         style={[
           styles.currentCard,
@@ -225,8 +219,9 @@ export default function SwipeStack({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: "flex-start",
     alignItems: "center",
+    paddingTop: spacing.md,
   },
   currentCard: {
     position: "absolute",
@@ -235,7 +230,15 @@ const styles = StyleSheet.create({
   nextCard: {
     position: "absolute",
     zIndex: 1,
-    opacity: 0.7,
-    transform: [{ scale: 0.95 }],
+    opacity: 0.6,
+    transform: [{ scale: 0.92 }, { translateY: 8 }],
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
 });

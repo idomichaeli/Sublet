@@ -1,6 +1,6 @@
 export interface FilterData {
   // Basic Details
-  bedrooms?: number;
+  bedrooms?: number[];
   bathrooms?: number;
   hasLivingRoom?: boolean;
   minSize?: number;

@@ -1,2 +1,1 @@
-// App configuration and mock data
-export * from './mockApartments';
+// App condition and other configurations can be exported from here

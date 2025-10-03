@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -21,14 +21,18 @@ export interface SwipeCardData {
   id: string;
   title: string;
   price: number;
-  location: string;
-  imageUrl: string;
+  neighborhood: string; // Neighborhood/area name
+  location: string; // Full address location
+  imageUrl: string; // Keep for backward Compatibility
+  photos?: string[]; // Array of photo URLs
   distance?: string;
   rating?: number;
   isFavorite?: boolean;
   rooms: number;
   bathrooms: number;
   size: number; // in square meters
+  floor: string; // Floor information
+  hasShelter: boolean; // Whether apartment has shelter
   ownerId?: string;
   availableFrom?: string; // YYYY-MM-DD format
   availableTo?: string; // YYYY-MM-DD format
@@ -47,76 +51,95 @@ export default function SwipeCard({
   onFavoritePress,
   onMoreInfoPress,
 }: SwipeCardProps) {
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+
+  // Get photos array, fallback to imageUrl for backward compatibility
+  const photos =
+    data.photos && data.photos.length > 0 ? data.photos : [data.imageUrl];
+  const currentPhoto = photos[currentPhotoIndex];
+
+  const handleImagePress = (event: any) => {
+    const { locationX } = event.nativeEvent;
+    const imageWidth = screenWidth - spacing.sm * 2;
+
+    // If tap is on the right side of the image, go to next photo
+    if (locationX > imageWidth / 2 && currentPhotoIndex < photos.length - 1) {
+      setCurrentPhotoIndex(currentPhotoIndex + 1);
+    }
+    // If tap is on the left side of the image, go to previous photo
+    else if (locationX <= imageWidth / 2 && currentPhotoIndex > 0) {
+      setCurrentPhotoIndex(currentPhotoIndex - 1);
+    }
+  };
+
   return (
-    <TouchableOpacity
-      style={styles.container}
-      onPress={onPress}
-      activeOpacity={0.9}
-    >
+    <View style={styles.container}>
       {/* Full Image Background */}
-      <Image source={{ uri: data.imageUrl }} style={styles.image} />
+      <TouchableOpacity
+        style={styles.imageContainer}
+        onPress={handleImagePress}
+        activeOpacity={1}
+      >
+        <Image source={{ uri: currentPhoto }} style={styles.image} />
 
-      {/* Dark Overlay */}
-      <View style={styles.overlay} />
+        {/* Photo indicators - Top center */}
+        {photos.length > 1 && (
+          <View style={styles.photoIndicators}>
+            {photos.map((_, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.photoIndicator,
+                  index === currentPhotoIndex && styles.activePhotoIndicator,
+                ]}
+              />
+            ))}
+          </View>
+        )}
 
-      {/* Favorite Button */}
-      <TouchableOpacity style={styles.favoriteButton} onPress={onFavoritePress}>
-        <Text style={styles.favoriteIcon}>{data.isFavorite ? "❤️" : "🤍"}</Text>
+        {/* Bedroom and Bathroom Tags - Top Right */}
+        <View style={styles.roomTagsContainer}>
+          <View style={styles.roomTag}>
+            <Text style={styles.roomTagIcon}>🛏</Text>
+            <Text style={styles.roomTagText}>{data.rooms}</Text>
+          </View>
+          <View style={styles.roomTag}>
+            <Text style={styles.roomTagIcon}>🛁</Text>
+            <Text style={styles.roomTagText}>{data.bathrooms}</Text>
+          </View>
+        </View>
       </TouchableOpacity>
 
-      {/* Content Overlay */}
-      <View style={styles.content}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title} numberOfLines={1}>
-            {data.title}
-          </Text>
-          <Text style={styles.price}>₪{data.price}/month</Text>
-        </View>
-
+      {/* Bottom Content Overlay */}
+      <View style={styles.bottomContent}>
         {/* Location */}
-        <Text style={styles.location} numberOfLines={1}>
-          📍 {data.location}
-        </Text>
+        <Text style={styles.locationText}>{data.neighborhood}</Text>
 
-        {/* Details */}
-        <View style={styles.details}>
-          <View style={styles.detailItem}>
-            <Text style={styles.detailIcon}>🛏️</Text>
-            <Text style={styles.detailText}>{data.rooms}</Text>
+        {/* Price */}
+        <Text style={styles.priceText}>₪{data.price.toLocaleString()}/mo</Text>
+
+        {/* Bottom Tags Row */}
+        <View style={styles.bottomTagsContainer}>
+          {/* Floor Tag */}
+          <View style={styles.bottomTag}>
+            <Text style={styles.bottomTagIcon}>🏢</Text>
+            <Text style={styles.bottomTagText}>Floor {data.floor}</Text>
           </View>
-          <View style={styles.detailItem}>
-            <Text style={styles.detailIcon}>🚿</Text>
-            <Text style={styles.detailText}>{data.bathrooms}</Text>
+
+          {/* Size Tag */}
+          <View style={styles.bottomTag}>
+            <Text style={styles.bottomTagIcon}>📐</Text>
+            <Text style={styles.bottomTagText}>{data.size} m²</Text>
           </View>
-          <View style={styles.detailItem}>
-            <Text style={styles.detailIcon}>📐</Text>
-            <Text style={styles.detailText}>{data.size}m²</Text>
+
+          {/* New Badge */}
+          <View style={styles.newBadge}>
+            <Text style={styles.newBadgeIcon}>✨</Text>
+            <Text style={styles.newBadgeText}>New</Text>
           </View>
         </View>
-
-        {/* Amenities */}
-        <View style={styles.amenities}>
-          {["WiFi", "Parking", "Pet Friendly"]
-            .slice(0, 3)
-            .map((amenity, index) => (
-              <View key={index} style={styles.amenityChip}>
-                <Text style={styles.amenityText}>{amenity}</Text>
-              </View>
-            ))}
-        </View>
-
-        {/* More Info Button */}
-        <TouchableOpacity
-          style={styles.moreInfoButton}
-          onPress={onMoreInfoPress}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.moreInfoText}>More Info</Text>
-          <Text style={styles.moreInfoIcon}>↑</Text>
-        </TouchableOpacity>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 }
 
@@ -125,153 +148,137 @@ const styles = StyleSheet.create({
     width: screenWidth - spacing.sm * 2,
     height: 600,
     borderRadius: borderRadius.lg,
-    ...shadows.lg,
     overflow: "hidden",
     position: "relative",
+  },
+  imageContainer: {
+    width: "100%",
+    height: "100%",
+    position: "absolute",
   },
   image: {
     width: "100%",
     height: "100%",
     resizeMode: "cover",
-    position: "absolute",
   },
-  overlay: {
+  // Photo indicators at the top center
+  photoIndicators: {
     position: "absolute",
-    top: 0,
+    top: spacing.lg,
     left: 0,
     right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.2)",
-  },
-  favoriteButton: {
-    position: "absolute",
-    top: spacing.md,
-    right: spacing.md,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
-    justifyContent: "center",
-    alignItems: "center",
-    ...shadows.md,
-    zIndex: 2,
-  },
-  favoriteIcon: {
-    fontSize: 20,
-  },
-  content: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: spacing.xl,
-    paddingBottom: spacing.xl + spacing.md,
-    zIndex: 2,
-  },
-  header: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: spacing.sm,
+    justifyContent: "center",
+    gap: spacing.xs,
   },
-  title: {
-    ...textStyles.h2,
-    color: colors.neutral[0],
-    fontWeight: "800",
-    flex: 1,
-    marginRight: spacing.sm,
-    textShadowColor: "rgba(0, 0, 0, 0.8)",
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
-    fontSize: 28,
+  photoIndicator: {
+    width: 8,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: "rgba(255, 255, 255, 0.5)",
   },
-  price: {
+  activePhotoIndicator: {
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    width: 16,
+  },
+  // Room tags in top right
+  roomTagsContainer: {
+    position: "absolute",
+    top: spacing.lg,
+    right: spacing.lg,
+    flexDirection: "column",
+    gap: spacing.xs,
+  },
+  roomTag: {
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    minWidth: 45,
+    justifyContent: "center",
+  },
+  roomTagIcon: {
+    fontSize: 14,
+  },
+  roomTagText: {
+    ...textStyles.caption,
+    color: colors.neutral[900],
+    fontWeight: "600",
+    fontSize: 12,
+  },
+  // Bottom content overlay
+  bottomContent: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingBottom: spacing.xl,
+    paddingHorizontal: spacing.lg,
+  },
+  locationText: {
     ...textStyles.h3,
-    color: colors.primary[300],
-    fontWeight: "700",
-    textShadowColor: "rgba(0, 0, 0, 0.8)",
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
-    fontSize: 24,
-  },
-  location: {
-    ...textStyles.body,
-    color: colors.neutral[200],
-    marginBottom: spacing.sm,
+    color: colors.neutral[0],
+    fontWeight: "600",
+    marginBottom: spacing.xs,
     textShadowColor: "rgba(0, 0, 0, 0.8)",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,
     fontSize: 16,
   },
-  details: {
-    flexDirection: "row",
+  priceText: {
+    ...textStyles.h2,
+    color: colors.neutral[0],
+    fontWeight: "700",
     marginBottom: spacing.md,
-    gap: spacing.lg,
+    textShadowColor: "rgba(0, 0, 0, 0.8)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+    fontSize: 20,
   },
-  detailItem: {
+  bottomTagsContainer: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    flexWrap: "wrap",
+  },
+  bottomTag: {
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.xs,
   },
-  detailIcon: {
-    fontSize: 16,
+  bottomTagIcon: {
+    fontSize: 12,
+    color: colors.neutral[0],
   },
-  detailText: {
-    ...textStyles.body,
-    color: colors.neutral[200],
-    fontWeight: "500",
-    textShadowColor: "rgba(0, 0, 0, 0.8)",
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
-    fontSize: 14,
-  },
-  amenities: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.sm,
-    marginBottom: spacing.md,
-  },
-  amenityChip: {
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.2)",
-  },
-  amenityText: {
+  bottomTagText: {
     ...textStyles.caption,
     color: colors.neutral[0],
     fontWeight: "600",
-    fontSize: 12,
+    fontSize: 11,
   },
-  description: {
-    ...textStyles.body,
-    color: colors.neutral[600],
-    lineHeight: 20,
-  },
-  moreInfoButton: {
+  newBadge: {
+    backgroundColor: colors.success[500],
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.xl,
-    borderRadius: borderRadius.lg,
-    marginTop: spacing.lg,
-    gap: spacing.sm,
-    ...shadows.md,
+    gap: spacing.xs,
   },
-  moreInfoText: {
-    ...textStyles.body,
-    color: colors.primary[600],
-    fontWeight: "700",
-    fontSize: 16,
+  newBadgeIcon: {
+    fontSize: 10,
+    color: colors.neutral[0],
   },
-  moreInfoIcon: {
-    ...textStyles.body,
-    color: colors.primary[600],
+  newBadgeText: {
+    ...textStyles.caption,
+    color: colors.neutral[0],
     fontWeight: "700",
-    fontSize: 18,
+    fontSize: 10,
   },
 });

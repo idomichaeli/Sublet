@@ -6,30 +6,13 @@ import {
   textStyles,
 } from "../../../../shared/constants/tokens";
 import Chip from "../../../../shared/components/ui/Chip";
-import { PropertyAmenitiesObject } from "../../../../core/types/propertyObjects";
-
-const REQUIRED_AMENITIES = [
-  { id: "wifi", label: "WiFi", icon: "📶" },
-  { id: "ac", label: "Air Conditioning", icon: "❄️" },
-  { id: "elevator", label: "Elevator", icon: "🛗" },
-  { id: "furnished", label: "Furnished", icon: "🛋️" },
-  { id: "pet_friendly", label: "Pet-friendly", icon: "🐕" },
-  { id: "smoking_allowed", label: "Smoking Allowed", icon: "🚬" },
-  { id: "accessible", label: "Accessible", icon: "♿" },
-  { id: "none", label: "None of them", icon: "❌" },
-];
-
-const ADDITIONAL_AMENITIES = [
-  { id: "heating", label: "Heating", icon: "🔥" },
-  { id: "parking", label: "Parking", icon: "🚗" },
-  { id: "balcony", label: "Balcony", icon: "🌅" },
-  { id: "gym", label: "Gym", icon: "💪" },
-  { id: "pool", label: "Pool", icon: "🏊" },
-  { id: "laundry", label: "Laundry", icon: "🧺" },
-  { id: "storage", label: "Storage", icon: "📦" },
-  { id: "garden", label: "Garden", icon: "🌳" },
-  { id: "rooftop", label: "Rooftop", icon: "🏢" },
-];
+import {
+  PropertyAmenitiesObject,
+  REQUIRED_AMENITIES,
+  ADDITIONAL_AMENITIES,
+  addAmenity,
+  hasRequiredAmenity,
+} from "../../../../core/types/propertyObjects";
 
 interface StepProps {
   data: PropertyAmenitiesObject;
@@ -38,54 +21,8 @@ interface StepProps {
 
 export default function AmenitiesStep({ data, onUpdate }: StepProps) {
   const handleAmenityToggle = (amenityId: string) => {
-    let newAmenities;
-    const requiredAmenityIds = [
-      "wifi",
-      "ac",
-      "elevator",
-      "furnished",
-      "pet_friendly",
-      "smoking_allowed",
-      "accessible",
-      "none",
-    ];
-    const additionalAmenityIds = [
-      "heating",
-      "parking",
-      "balcony",
-      "gym",
-      "pool",
-      "laundry",
-      "storage",
-      "garden",
-      "rooftop",
-    ];
-
-    if (amenityId === "none") {
-      // If "None of them" is selected, clear only required amenities but keep additional ones
-      if (data.amenities.includes("none")) {
-        newAmenities = data.amenities.filter((id) =>
-          additionalAmenityIds.includes(id)
-        );
-      } else {
-        newAmenities = [
-          ...data.amenities.filter((id) => additionalAmenityIds.includes(id)),
-          "none",
-        ];
-      }
-    } else if (requiredAmenityIds.includes(amenityId)) {
-      // If a required amenity is selected, remove "none" and toggle the selected amenity
-      newAmenities = data.amenities.includes(amenityId)
-        ? data.amenities.filter((id) => id !== amenityId)
-        : [...data.amenities.filter((id) => id !== "none"), amenityId];
-    } else {
-      // If an additional amenity is selected, just toggle it (don't affect "none")
-      newAmenities = data.amenities.includes(amenityId)
-        ? data.amenities.filter((id) => id !== amenityId)
-        : [...data.amenities, amenityId];
-    }
-
-    onUpdate({ amenities: newAmenities });
+    const updatedAmenities = addAmenity(data, amenityId);
+    onUpdate({ amenities: updatedAmenities.amenities });
   };
 
   const renderAmenitiesSection = (
@@ -127,33 +64,14 @@ export default function AmenitiesStep({ data, onUpdate }: StepProps) {
         false
       )}
 
-      {(() => {
-        const requiredAmenityIds = [
-          "wifi",
-          "ac",
-          "elevator",
-          "furnished",
-          "pet_friendly",
-          "smoking_allowed",
-          "accessible",
-          "none",
-        ];
-        const hasRequiredAmenity = data.amenities.some((amenityId) =>
-          requiredAmenityIds.includes(amenityId)
-        );
-
-        if (!hasRequiredAmenity) {
-          return (
-            <View style={styles.requiredContainer}>
-              <Text style={styles.requiredLabel}>
-                ⚠️ Please select at least one amenity from the Essential
-                Amenities section to continue
-              </Text>
-            </View>
-          );
-        }
-        return null;
-      })()}
+      {!hasRequiredAmenity(data) && (
+        <View style={styles.requiredContainer}>
+          <Text style={styles.requiredLabel}>
+            ⚠️ Please select at least one amenity from the Essential Amenities
+            section to continue
+          </Text>
+        </View>
+      )}
     </View>
   );
 }

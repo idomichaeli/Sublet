@@ -10,9 +10,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
-import { useFavoritesStore } from "../../../shared/hooks/state/favoritesStore";
+import { useFavoritesStore } from "../../../core/services/savedPropertiesStore";
 import { SwipeCardData } from "../components/SwipeCard";
-import { browserApartments } from "../data/browserData";
+import { renterPropertyService } from "../../../core/services/renterPropertyService";
 import {
   colors,
   spacing,
@@ -44,11 +44,22 @@ export default function FavoritesScreen({ navigation }: any) {
     null
   );
 
-  // Get favorite apartments data
-  const favoriteApartments = useMemo(() => {
-    return browserApartments.filter((apartment) =>
-      favorites.includes(apartment.id)
-    );
+  const [favoriteApartments, setFavoriteApartments] = useState<SwipeCardData[]>(
+    []
+  );
+
+  useEffect(() => {
+    const loadFavorites = async () => {
+      try {
+        // Since favorites already contains full SwipeCardData objects, we can use them directly
+        setFavoriteApartments(favorites);
+      } catch (error) {
+        console.error("Error loading favorite properties:", error);
+        setFavoriteApartments([]);
+      }
+    };
+
+    loadFavorites();
   }, [favorites]);
 
   // Filter favorites based on selected area

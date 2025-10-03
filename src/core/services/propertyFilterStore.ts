@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { FilterData } from "../../features/swipe/types/PropertyFilterData";
+import { FilterData } from "../../features/swipe/types/FilterData";
 
 interface FilterStore {
   appliedFilters: FilterData;

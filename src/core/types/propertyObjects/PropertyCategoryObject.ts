@@ -25,16 +25,19 @@ export const PROPERTY_TYPES = [
   {
     id: "entire_place" as PropertyType,
     label: "Entire Place",
+    icon: "🏠",
     description: "Renters get the whole place to themselves",
   },
   {
     id: "room" as PropertyType,
     label: "Room",
+    icon: "🚪",
     description: "Renters get a private room, shared common areas",
   },
   {
     id: "shared_room" as PropertyType,
     label: "Shared Room",
+    icon: "👥",
     description: "Renters share a room with others",
   },
 ];

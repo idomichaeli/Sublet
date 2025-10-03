@@ -13,7 +13,9 @@ import {
   textStyles,
   borderRadius,
 } from "../../shared/constants/tokens";
-import { mockApartments } from "../../shared/data/mockApartments";
+import { renterPropertyService } from "../../core/services/renterPropertyService";
+import { SwipeCardData } from "./components/SwipeCard";
+import { useState, useEffect } from "react";
 
 interface BookingScreenProps {
   route: {
@@ -29,7 +31,27 @@ export default function BookingScreen({
   navigation,
 }: BookingScreenProps) {
   const { listingId } = route.params;
-  const listing = mockApartments.find((apt) => apt.id === listingId);
+  const [listing, setListing] = useState<SwipeCardData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadPropertyDetails();
+  }, [listingId]);
+
+  const loadPropertyDetails = async () => {
+    try {
+      setIsLoading(true);
+      const properties =
+        await renterPropertyService.getAllPublishedProperties();
+      const property = properties.find((apt) => apt.id === listingId);
+      setListing(property || null);
+    } catch (error) {
+      console.error("Error loading property details:", error);
+      setListing(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (!listing) {
     return (

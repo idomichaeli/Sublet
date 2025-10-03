@@ -13,7 +13,7 @@ import {
   textStyles,
   borderRadius,
 } from "../../shared/constants/tokens";
-import { useFavoritesStore } from "../../shared/hooks/state/favoritesStore";
+import { useFavoritesStore } from "../../core/services/savedPropertiesStore";
 import SwipeCard from "./components/SwipeCard";
 import Card from "../../shared/components/ui/Card";
 import Button from "../../shared/components/ui/Button";
@@ -23,7 +23,9 @@ import RequestButton from "../favorites/components/RequestButton";
 import MakeRequestBottomSheet from "../favorites/MakeRequestBottomSheet";
 import { locations } from "../../shared/constants/locations";
 import { useRequestStore } from "../../shared/hooks/state/requestStore";
-import { mockApartments } from "../../shared/data/mockApartments";
+import { renterPropertyService } from "../../core/services/renterPropertyService";
+import { useState, useEffect } from "react";
+import { SwipeCardData } from "./components/SwipeCard";
 
 export default function SavedPropertiesScreen() {
   const { favorites } = useFavoritesStore();
@@ -32,10 +34,27 @@ export default function SavedPropertiesScreen() {
   const [selectedProperty, setSelectedProperty] = React.useState<string | null>(
     null
   );
+  const [properties, setProperties] = useState<SwipeCardData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const favoriteApartments = mockApartments.filter((apartment) =>
-    favorites.includes(apartment.id)
-  );
+  useEffect(() => {
+    loadProperties();
+  }, [favorites]);
+
+  const loadProperties = async () => {
+    try {
+      setIsLoading(true);
+      // Since favorites already contains full SwipeCardData objects, we can use them directly
+      setProperties(favorites);
+    } catch (error) {
+      console.error("Error loading properties:", error);
+      setProperties([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const favoriteApartments = properties;
 
   const handleMakeRequest = (propertyId: string) => {
     setSelectedProperty(propertyId);

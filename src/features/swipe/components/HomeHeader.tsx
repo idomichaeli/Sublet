@@ -95,7 +95,8 @@ export default function HomeHeader({
 const styles = StyleSheet.create({
   header: {
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    paddingTop: spacing.xl * 2, // Increased from spacing.md
+    paddingBottom: spacing.md,
     backgroundColor: colors.neutral[50],
     borderBottomWidth: 1,
     borderBottomColor: colors.neutral[100],

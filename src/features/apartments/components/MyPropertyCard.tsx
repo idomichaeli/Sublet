@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   statValue: {
-    ...textStyles.h4,
+    ...textStyles.h3,
     color: colors.neutral[900],
     fontWeight: "600",
     marginBottom: spacing.xs,

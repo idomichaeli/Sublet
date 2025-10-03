@@ -1,2 +1,1 @@
-// Swipe services exports
-export * from './propertyMockData';
+// Swipe services exports - empty for now

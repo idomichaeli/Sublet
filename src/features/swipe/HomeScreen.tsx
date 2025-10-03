@@ -1,38 +1,75 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, spacing } from "../../shared/constants/tokens";
 import SearchBar from "../../shared/components/ui/SearchBar";
 import SwipeDiscoveryScreen from "./SwipeDiscoveryScreen";
-import { useFavoritesStore } from "../../shared/hooks/state/favoritesStore";
+import { useFavoritesStore } from "../../core/services/savedPropertiesStore";
 import HomeHeader from "./components/HomeHeader";
 import HeroCarousel from "./components/HeroCarousel";
-import QuickFilters from "./components/QuickFilters";
-import ListingsSection from "./components/ListingsSection";
+import QuickFilters from "./components/PropertyQuickFilters";
+import ListingsSection from "./components/PropertyListingsSection";
 import FilterBottomSheet from "./components/FilterBottomSheet";
-import { browserListings, heroData, quickFilters } from "./data/browserData";
 import { FilterData } from "./types/FilterData";
 import { useFilterStore } from "../../shared/hooks/state/filterStore";
+import { Listing } from "./components/PropertyListingsSection";
+import { SwipeCardData } from "./components/SwipeCard";
+import { useSafeAsync } from "../../shared/hooks/useSafeAsync";
 
 type ViewMode = "list" | "swipe";
 
 export default function HomeScreen({ navigation }: any) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [listings, setListings] = useState(browserListings);
   const [activeFilter, setActiveFilter] = useState("All");
   const [viewMode, setViewMode] = useState<ViewMode>("swipe");
   const [showFilterSheet, setShowFilterSheet] = useState(false);
 
-  const { isFavorite } = useFavoritesStore();
-  const { appliedFilters, setAppliedFilters } = useFilterStore();
+  const { isFavorite, addFavorite, removeFavorite } = useFavoritesStore();
+  const {
+    appliedFilters,
+    searchQuery,
+    isLoading,
+    properties,
+    filteredCount,
+    appliedFiltersCount,
+    setSearchQuery,
+    setAppliedFilters,
+  } = useFilterStore();
+
+  // Safe async operations to prevent crashes on unmount
+  const { executeIfMounted } = useSafeAsync();
+
+  useEffect(() => {
+    // Trigger initial load
+    setAppliedFilters({});
+  }, []);
+
+  // Convert SwipeCardData to Listing format for ListingsSection component
+  const formatListings = (swipeProperties: SwipeCardData[]): Listing[] => {
+    return swipeProperties.map((property: SwipeCardData) => ({
+      id: property.id,
+      title: property.title,
+      location: property.location,
+      price: property.price,
+      imageUrl: property.imageUrl,
+      status: "available" as const,
+      rating: property.rating || 4.5,
+      reviewCount: Math.floor(Math.random() * 100) + 10,
+      isFavorite: isFavorite(property.id), // Check favorites store instead of property
+      amenities: ["WiFi", "Parking", "Pet Friendly"], // Default amenities for now
+      bedrooms: property.rooms,
+      bathrooms: property.bathrooms,
+      size: property.size,
+    }));
+  };
 
   // Filter out favorited apartments from the listings
+  const listings = formatListings(properties);
   const filteredListings = listings.filter(
     (listing) => !isFavorite(listing.id)
   );
 
   const handleSearch = () => {
-    // Implement search logic
+    // Search is now handled automatically through the filter store
     console.log("Searching for:", searchQuery);
   };
 
@@ -41,9 +78,15 @@ export default function HomeScreen({ navigation }: any) {
   };
 
   const handleApplyFilters = (filters: FilterData) => {
-    setAppliedFilters(filters);
-    console.log("Applied filters:", filters);
-    // TODO: Implement actual filtering logic
+    executeIfMounted(() => {
+      setAppliedFilters(filters);
+      setShowFilterSheet(false);
+      console.log(
+        "Filters applied successfully. Found",
+        filteredCount,
+        "properties"
+      );
+    });
   };
 
   const handleLocationPress = () => {
@@ -60,13 +103,17 @@ export default function HomeScreen({ navigation }: any) {
   };
 
   const handleFavoritePress = (listingId: string) => {
-    setListings((prev) =>
-      prev.map((listing) =>
-        listing.id === listingId
-          ? { ...listing, isFavorite: !listing.isFavorite }
-          : listing
-      )
-    );
+    // Find the property data to add to favorites
+    const propertyData = properties.find((p) => p.id === listingId);
+    if (propertyData) {
+      if (isFavorite(listingId)) {
+        removeFavorite(listingId);
+        console.log("Removed from favorites:", propertyData.title);
+      } else {
+        addFavorite(propertyData);
+        console.log("Added to favorites:", propertyData.title);
+      }
+    }
   };
 
   const handleHeroPress = (heroId: string) => {
@@ -78,7 +125,10 @@ export default function HomeScreen({ navigation }: any) {
   if (viewMode === "swipe") {
     return (
       <>
-        <SwipeDiscoveryScreen onFilterPress={handleFilter} />
+        <SwipeDiscoveryScreen
+          navigation={navigation}
+          onFilterPress={handleFilter}
+        />
         <FilterBottomSheet
           visible={showFilterSheet}
           onClose={() => setShowFilterSheet(false)}
@@ -91,7 +141,7 @@ export default function HomeScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      {/* <ScrollView
+      <ScrollView
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -100,7 +150,7 @@ export default function HomeScreen({ navigation }: any) {
           viewMode={viewMode}
           onViewModeChange={setViewMode}
           onFilterPress={handleFilter}
-          hasActiveFilters={Object.keys(appliedFilters).length > 0}
+          hasActiveFilters={appliedFiltersCount > 0}
         />
 
         <ListingsSection
@@ -119,15 +169,15 @@ export default function HomeScreen({ navigation }: any) {
             onFilterPress={handleFilter}
             onLocationPress={handleLocationPress}
             showLocationButton
-            hasActiveFilters={Object.keys(appliedFilters).length > 0}
+            hasActiveFilters={appliedFiltersCount > 0}
           />
         </View>
 
-        <QuickFilters
+        {/* <QuickFilters
           filters={quickFilters}
           activeFilter={activeFilter}
           onFilterChange={setActiveFilter}
-        />
+        /> */}
       </ScrollView>
 
       <FilterBottomSheet
@@ -135,7 +185,7 @@ export default function HomeScreen({ navigation }: any) {
         onClose={() => setShowFilterSheet(false)}
         onApply={handleApplyFilters}
         initialFilters={appliedFilters}
-      /> */}
+      />
     </SafeAreaView>
   );
 }

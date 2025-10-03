@@ -1,16 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, spacing } from "../../../shared/constants/tokens";
 import SearchBar from "../../../shared/components/ui/SearchBar";
-import MainHomeScreen from "../HomeScreen";
-import { useFavoritesStore } from "../../../shared/hooks/state/favoritesStore";
+import SwipeDiscoveryScreen from "../SwipeDiscoveryScreen";
+import { useFavoritesStore } from "../../../core/services/savedPropertiesStore";
 import HomeHeader from "../components/HomeHeader";
-import HeroCarousel from "../components/HeroCarousel";
-import QuickFilters from "../components/QuickFilters";
-import ListingsSection from "../components/PropertyListingsSection";
-import FilterBottomSheet from "../components/PropertyFilterBottomSheet";
-import { mockListings, heroData, quickFilters } from "../data/mockData";
+import PropertyListingsSection from "../components/PropertyListingsSection";
+import FilterBottomSheet from "../components/FilterBottomSheet";
+import { renterPropertyService } from "../../../core/services/renterPropertyService";
+import { SwipeCardData } from "../components/SwipeCard";
 import { FilterData } from "../types/FilterData";
 import { useFilterStore } from "../../../shared/hooks/state/filterStore";
 
@@ -18,13 +17,32 @@ type ViewMode = "list" | "swipe";
 
 export default function HomeScreen({ navigation }: any) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [listings, setListings] = useState(mockListings);
+  const [listings, setListings] = useState<SwipeCardData[]>([]);
   const [activeFilter, setActiveFilter] = useState("All");
   const [viewMode, setViewMode] = useState<ViewMode>("swipe");
   const [showFilterSheet, setShowFilterSheet] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const { isFavorite } = useFavoritesStore();
+  const { isFavorite, addFavorite, removeFavorite } = useFavoritesStore();
   const { appliedFilters, setAppliedFilters } = useFilterStore();
+
+  useEffect(() => {
+    loadProperties();
+  }, []);
+
+  const loadProperties = async () => {
+    try {
+      setIsLoading(true);
+      const properties =
+        await renterPropertyService.getAllPublishedProperties();
+      setListings(properties);
+    } catch (error) {
+      console.error("Error loading properties:", error);
+      setListings([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Filter out favorited apartments from the listings
   const filteredListings = listings.filter(
@@ -60,13 +78,17 @@ export default function HomeScreen({ navigation }: any) {
   };
 
   const handleFavoritePress = (listingId: string) => {
-    setListings((prev) =>
-      prev.map((listing) =>
-        listing.id === listingId
-          ? { ...listing, isFavorite: !listing.isFavorite }
-          : listing
-      )
-    );
+    // Find the property data to add to favorites
+    const propertyData = listings.find((p) => p.id === listingId);
+    if (propertyData) {
+      if (isFavorite(listingId)) {
+        removeFavorite(listingId);
+        console.log("Removed from favorites:", propertyData.title);
+      } else {
+        addFavorite(propertyData);
+        console.log("Added to favorites:", propertyData.title);
+      }
+    }
   };
 
   const handleHeroPress = (heroId: string) => {
@@ -78,7 +100,11 @@ export default function HomeScreen({ navigation }: any) {
   if (viewMode === "swipe") {
     return (
       <>
-        <MainHomeScreen navigation={navigation} />
+        <SwipeDiscoveryScreen
+          navigation={navigation}
+          onFilterPress={handleFilter}
+          onViewModeChange={setViewMode}
+        />
         <FilterBottomSheet
           visible={showFilterSheet}
           onClose={() => setShowFilterSheet(false)}
@@ -91,20 +117,20 @@ export default function HomeScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      {/* <ScrollView
+      <ScrollView
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
-      > */}
-      {/* <HomeHeader
+      >
+        <HomeHeader
           viewMode={viewMode}
           onViewModeChange={setViewMode}
           onFilterPress={handleFilter}
           hasActiveFilters={Object.keys(appliedFilters).length > 0}
-        /> */}
+        />
 
-      {/* Search Bar */}
-      {/* <View style={styles.searchContainer}>
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
           <SearchBar
             placeholder="Search by city, address, or ZIP"
             value={searchQuery}
@@ -115,18 +141,25 @@ export default function HomeScreen({ navigation }: any) {
             showLocationButton
             hasActiveFilters={Object.keys(appliedFilters).length > 0}
           />
-        </View> */}
+        </View>
 
-      {/* <HeroCarousel data={heroData} onHeroPress={handleHeroPress} /> */}
-
-      {/* <QuickFilters
-          filters={quickFilters}
-          activeFilter={activeFilter}
-          onFilterChange={setActiveFilter}
-        />
-
-        <ListingsSection
-          listings={filteredListings}
+        {/* Convert SwipeCardData to Listing format for ListingsSection component */}
+        <PropertyListingsSection
+          listings={filteredListings.map((property: SwipeCardData) => ({
+            id: property.id,
+            title: property.title,
+            location: property.location,
+            price: property.price,
+            imageUrl: property.imageUrl,
+            status: "available" as const,
+            rating: property.rating || 4.5,
+            reviewCount: Math.floor(Math.random() * 100) + 10,
+            isFavorite: isFavorite(property.id),
+            amenities: ["WiFi", "Parking", "Pet Friendly"],
+            bedrooms: property.rooms,
+            bathrooms: property.bathrooms,
+            size: property.size,
+          }))}
           onListingPress={handleListingPress}
           onBookPress={handleBookPress}
           onFavoritePress={handleFavoritePress}
@@ -138,7 +171,7 @@ export default function HomeScreen({ navigation }: any) {
         onClose={() => setShowFilterSheet(false)}
         onApply={handleApplyFilters}
         initialFilters={appliedFilters}
-      /> */}
+      />
     </SafeAreaView>
   );
 }

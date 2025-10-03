@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, Image } from "react-native";
 import {
   colors,
   spacing,
@@ -8,7 +8,7 @@ import {
   shadows,
 } from "../../../shared/constants/tokens";
 import Button from "../../../shared/components/ui/Button";
-import { useFavoritesStore } from "../../../shared/hooks/state/favoritesStore";
+import { useFavoritesStore } from "../../../core/services/savedPropertiesStore";
 
 interface SwipeEmptyStateProps {
   onReload: () => void;
@@ -28,7 +28,11 @@ export default function SwipeEmptyState({
       <View style={styles.content}>
         {/* Icon */}
         <View style={styles.iconContainer}>
-          <Text style={styles.icon}>🏠</Text>
+          <Image
+            source={require("../../../app/assets/icon.png")}
+            style={styles.icon}
+            resizeMode="contain"
+          />
         </View>
 
         {/* Title */}
@@ -98,9 +102,9 @@ const styles = StyleSheet.create({
     maxWidth: 300,
   },
   iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 200,
+    height: 200,
+    borderRadius: 60,
     backgroundColor: colors.neutral[100],
     justifyContent: "center",
     alignItems: "center",
@@ -108,7 +112,8 @@ const styles = StyleSheet.create({
     ...shadows.md,
   },
   icon: {
-    fontSize: 40,
+    width: 300,
+    height: 300,
   },
   title: {
     ...textStyles.h2,

@@ -19,7 +19,6 @@ export const REQUIRED_AMENITIES = [
 export const ADDITIONAL_AMENITIES = [
   { id: "heating", label: "Heating", icon: "🔥" },
   { id: "parking", label: "Parking", icon: "🚗" },
-  { id: "balcony", label: "Balcony", icon: "🌅" },
   { id: "gym", label: "Gym", icon: "💪" },
   { id: "pool", label: "Pool", icon: "🏊" },
   { id: "laundry", label: "Laundry", icon: "🧺" },

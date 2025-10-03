@@ -11,18 +11,7 @@ import SizeInput from "../../../../shared/components/ui/SizeInput";
 import Input from "../../../../shared/components/ui/Input";
 import Toggle from "../../../../shared/components/ui/Toggle";
 import { PropertyBasicDetailsObject } from "../../../../core/types/propertyObjects";
-
-// Specific room options (shown above Additional Rooms)
-const SPECIFIC_ROOMS = ["Kitchen", "Balcony", "Garden/Yard", "Pantry"];
-
-// Additional room options
-const ADDITIONAL_ROOMS = [
-  "Dining room",
-  "Office room",
-  "Garage",
-  "Closet room",
-  "Outdoor Kitchen",
-];
+import { SPECIFIC_ROOMS, ADDITIONAL_ROOMS, BEDROOM_COUNTS, BATHROOM_COUNTS, RENOVATION_STATUSES } from "../../../../core/types/propertyObjects/PropertyBasicDetailsObject";
 
 // Helper function to validate decimal input (only whole numbers and halves)
 const validateDecimalInput = (text: string): number | undefined => {
@@ -156,7 +145,7 @@ export default function BasicDetailsStep({ data, onUpdate }: StepProps) {
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Bedrooms</Text>
           <View style={styles.chipContainer}>
-            {[1, 2, 3, 4].map((count) => (
+            {BEDROOM_COUNTS.map((count) => (
               <Chip
                 key={count}
                 label={count === 4 ? "Other" : count.toString()}
@@ -202,7 +191,7 @@ export default function BasicDetailsStep({ data, onUpdate }: StepProps) {
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Bathrooms</Text>
           <View style={styles.chipContainer}>
-            {[1, 2, 3].map((count) => (
+            {BATHROOM_COUNTS.map((count) => (
               <Chip
                 key={count}
                 label={count === 3 ? "3+" : count.toString()}
@@ -286,24 +275,15 @@ export default function BasicDetailsStep({ data, onUpdate }: StepProps) {
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Renovation Status</Text>
           <View style={styles.chipContainer}>
+          {RENOVATION_STATUSES.map((status) => (
             <Chip
-              label="✨ New"
-              selected={data.renovation === "new"}
-              onPress={() => onUpdate({ renovation: "new" })}
+              key={status.id}
+              label={status.label}
+              selected={data.renovation === status.id}
+              onPress={() => onUpdate({ renovation: status.id })}
               variant="primary"
             />
-            <Chip
-              label="🛠️ Renovated"
-              selected={data.renovation === "renovated"}
-              onPress={() => onUpdate({ renovation: "renovated" })}
-              variant="primary"
-            />
-            <Chip
-              label="🏚️ Needs work"
-              selected={data.renovation === "needs_work"}
-              onPress={() => onUpdate({ renovation: "needs_work" })}
-              variant="primary"
-            />
+          ))}
           </View>
         </View>
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Modal,
   Dimensions,
+  Animated,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -19,8 +20,20 @@ import {
 import Button from "../../../shared/components/ui/Button";
 import Chip from "../../../shared/components/ui/Chip";
 import Toggle from "../../../shared/components/ui/Toggle";
+import DualRangeSlider from "../../../shared/components/ui/DualRangeSlider";
 import Input from "../../../shared/components/ui/Input";
 import { FilterData, FilterStepProps } from "../types/FilterData";
+import {
+  REQUIRED_AMENITIES,
+  ADDITIONAL_AMENITIES,
+} from "../../../core/types/propertyObjects";
+import {
+  ALL_ROOMS,
+  BEDROOM_COUNTS,
+  BATHROOM_COUNTS,
+  RENOVATION_STATUSES,
+  getRenovationLabel,
+} from "../../../core/types/propertyObjects/PropertyBasicDetailsObject";
 
 const { height: screenHeight } = Dimensions.get("window");
 
@@ -31,46 +44,60 @@ interface FilterBottomSheetProps {
   initialFilters?: FilterData;
 }
 
-const STEPS = ["Basic Details", "Amenities", "Price & Location", "Review"];
-
-// Additional room options
-const ADDITIONAL_ROOMS = [
-  "Dining room",
-  "Kitchen",
-  "Pantry",
-  "Office room",
-  "Balcony",
-  "Garage",
-  "Closet room",
-  "Garden/Yard",
-  "Outdoor Kitchen",
+const TABS = [
+  { id: "basic", label: "Basic Details", icon: "🏠" },
+  { id: "amenities", label: "Amenities", icon: "✨" },
+  { id: "price", label: "Price & Location", icon: "💰" },
 ];
 
-// Amenities
-const REQUIRED_AMENITIES = [
-  { id: "wifi", label: "WiFi", icon: "📶" },
-  { id: "ac", label: "Air Conditioning", icon: "❄️" },
-  { id: "elevator", label: "Elevator", icon: "🛗" },
-  { id: "furnished", label: "Furnished", icon: "🛋️" },
-  { id: "pet_friendly", label: "Pet-friendly", icon: "🐕" },
-  { id: "smoking_allowed", label: "Smoking Allowed", icon: "🚬" },
-  { id: "accessible", label: "Accessible", icon: "♿" },
-];
-
-const OPTIONAL_AMENITIES = [
-  { id: "heating", label: "Heating", icon: "🔥" },
-  { id: "parking", label: "Parking", icon: "🚗" },
-  { id: "balcony", label: "Balcony", icon: "🌅" },
-  { id: "gym", label: "Gym", icon: "💪" },
-  { id: "pool", label: "Pool", icon: "🏊" },
-  { id: "laundry", label: "Laundry", icon: "🧺" },
-  { id: "storage", label: "Storage", icon: "📦" },
-  { id: "garden", label: "Garden", icon: "🌳" },
-  { id: "rooftop", label: "Rooftop", icon: "🏢" },
-];
+// Helper function to check if a tab has data
+const getTabHasData = (tabId: string, filterData: FilterData): boolean => {
+  switch (tabId) {
+    case "basic":
+      return !!(
+        filterData.bedrooms?.length ||
+        filterData.bathrooms ||
+        filterData.hasLivingRoom !== undefined ||
+        filterData.minSize ||
+        filterData.maxSize ||
+        (filterData.renovation && filterData.renovation !== "any") ||
+        filterData.additionalRooms?.length
+      );
+    case "amenities":
+      return !!filterData.amenities?.length;
+    case "price":
+      return !!(
+        filterData.minPrice ||
+        filterData.maxPrice ||
+        (filterData.propertyType && filterData.propertyType !== "any")
+      );
+    default:
+      return false;
+  }
+};
 
 // Basic Details Step Component
 function BasicDetailsStep({ data, onUpdate }: FilterStepProps) {
+  const [sizeRange, setSizeRange] = useState({
+    min: data.minSize || 30,
+    max: data.maxSize || 500,
+  });
+
+  useEffect(() => {
+    setSizeRange({
+      min: data.minSize || 30,
+      max: data.maxSize || 500,
+    });
+  }, [data.minSize, data.maxSize]);
+
+  const handleSizeRangeChange = (min: number, max: number) => {
+    setSizeRange({ min, max });
+    onUpdate({
+      minSize: min !== 30 ? min : undefined,
+      maxSize: max !== 500 ? max : undefined,
+    });
+  };
+
   const handleRoomToggle = (room: string, isSelected: boolean) => {
     const currentRooms = data.additionalRooms || [];
     if (isSelected) {
@@ -79,6 +106,22 @@ function BasicDetailsStep({ data, onUpdate }: FilterStepProps) {
       }
     } else {
       onUpdate({ additionalRooms: currentRooms.filter((r) => r !== room) });
+    }
+  };
+
+  const handleBedroomToggle = (bedroomCount: number) => {
+    const currentBedrooms = data.bedrooms || [];
+    if (currentBedrooms.includes(bedroomCount)) {
+      // Remove from selection
+      const newSelection = currentBedrooms.filter(
+        (count) => count !== bedroomCount
+      );
+      onUpdate({
+        bedrooms: newSelection.length > 0 ? newSelection : undefined,
+      });
+    } else {
+      // Add to selection
+      onUpdate({ bedrooms: [...currentBedrooms, bedroomCount] });
     }
   };
 
@@ -93,16 +136,16 @@ function BasicDetailsStep({ data, onUpdate }: FilterStepProps) {
         <View style={styles.chipContainer}>
           <Chip
             label="Any"
-            selected={!data.bedrooms}
+            selected={!data.bedrooms || data.bedrooms.length === 0}
             onPress={() => onUpdate({ bedrooms: undefined })}
             variant="primary"
           />
-          {[1, 2, 3, 4].map((count) => (
+          {BEDROOM_COUNTS.map((count) => (
             <Chip
               key={count}
-              label={count === 4 ? "4+" : count.toString()}
-              selected={data.bedrooms === count}
-              onPress={() => onUpdate({ bedrooms: count })}
+              label={count === 6 ? "6+" : count.toString()}
+              selected={data.bedrooms?.includes(count) || false}
+              onPress={() => handleBedroomToggle(count)}
               variant="primary"
             />
           ))}
@@ -144,7 +187,7 @@ function BasicDetailsStep({ data, onUpdate }: FilterStepProps) {
             onPress={() => onUpdate({ bathrooms: undefined })}
             variant="primary"
           />
-          {[1, 2, 3].map((count) => (
+          {BATHROOM_COUNTS.map((count) => (
             <Chip
               key={count}
               label={count === 3 ? "3+" : count.toString()}
@@ -158,34 +201,16 @@ function BasicDetailsStep({ data, onUpdate }: FilterStepProps) {
 
       {/* Size Range */}
       <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>Size Range (m²)</Text>
-        <View style={styles.sizeRangeContainer}>
-          <View style={styles.sizeInputContainer}>
-            <Input
-              label="Min Size"
-              placeholder="30"
-              value={data.minSize?.toString() || ""}
-              onChangeText={(text) =>
-                onUpdate({ minSize: text ? parseInt(text) : undefined })
-              }
-              keyboardType="numeric"
-              style={styles.sizeInput}
-            />
-          </View>
-          <Text style={styles.sizeRangeSeparator}>to</Text>
-          <View style={styles.sizeInputContainer}>
-            <Input
-              label="Max Size"
-              placeholder="500"
-              value={data.maxSize?.toString() || ""}
-              onChangeText={(text) =>
-                onUpdate({ maxSize: text ? parseInt(text) : undefined })
-              }
-              keyboardType="numeric"
-              style={styles.sizeInput}
-            />
-          </View>
-        </View>
+        <DualRangeSlider
+          label="Size Range"
+          minValue={sizeRange.min}
+          maxValue={sizeRange.max}
+          onRangeChange={handleSizeRangeChange}
+          minimumRange={30}
+          maximumRange={500}
+          step={10}
+          unit="m²"
+        />
       </View>
 
       {/* Renovation Status */}
@@ -198,24 +223,15 @@ function BasicDetailsStep({ data, onUpdate }: FilterStepProps) {
             onPress={() => onUpdate({ renovation: "any" })}
             variant="primary"
           />
-          <Chip
-            label="✨ New"
-            selected={data.renovation === "new"}
-            onPress={() => onUpdate({ renovation: "new" })}
-            variant="primary"
-          />
-          <Chip
-            label="🛠️ Renovated"
-            selected={data.renovation === "renovated"}
-            onPress={() => onUpdate({ renovation: "renovated" })}
-            variant="primary"
-          />
-          <Chip
-            label="🏚️ Needs work"
-            selected={data.renovation === "needs_work"}
-            onPress={() => onUpdate({ renovation: "needs_work" })}
-            variant="primary"
-          />
+          {RENOVATION_STATUSES.map((status) => (
+            <Chip
+              key={status.id}
+              label={status.label}
+              selected={data.renovation === status.id}
+              onPress={() => onUpdate({ renovation: status.id })}
+              variant="primary"
+            />
+          ))}
         </View>
       </View>
 
@@ -224,7 +240,7 @@ function BasicDetailsStep({ data, onUpdate }: FilterStepProps) {
         <Text style={styles.inputLabel}>Additional Rooms</Text>
         <Text style={styles.inputSubtext}>Select rooms you'd like to have</Text>
         <View style={styles.roomOptionsContainer}>
-          {ADDITIONAL_ROOMS.map((room) => (
+          {ALL_ROOMS.map((room) => (
             <View key={room} style={styles.roomOption}>
               <Toggle
                 value={data.additionalRooms?.includes(room) || false}
@@ -285,7 +301,7 @@ function AmenitiesStep({ data, onUpdate }: FilterStepProps) {
 
       {renderAmenitiesSection(REQUIRED_AMENITIES, "Essential Amenities", true)}
       {renderAmenitiesSection(
-        OPTIONAL_AMENITIES,
+        ADDITIONAL_AMENITIES,
         "Additional Amenities",
         false
       )}
@@ -303,6 +319,26 @@ function AmenitiesStep({ data, onUpdate }: FilterStepProps) {
 
 // Price & Location Step Component
 function PriceLocationStep({ data, onUpdate }: FilterStepProps) {
+  const [priceRange, setPriceRange] = useState({
+    min: data.minPrice || 1000,
+    max: data.maxPrice || 5000,
+  });
+
+  useEffect(() => {
+    setPriceRange({
+      min: data.minPrice || 1000,
+      max: data.maxPrice || 5000,
+    });
+  }, [data.minPrice, data.maxPrice]);
+
+  const handlePriceRangeChange = (min: number, max: number) => {
+    setPriceRange({ min, max });
+    onUpdate({
+      minPrice: min !== 1000 ? min : undefined,
+      maxPrice: max !== 5000 ? max : undefined,
+    });
+  };
+
   return (
     <View style={styles.stepContainer}>
       <Text style={styles.stepTitle}>Price & Location</Text>
@@ -312,34 +348,16 @@ function PriceLocationStep({ data, onUpdate }: FilterStepProps) {
 
       {/* Price Range */}
       <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>Monthly Rent Range (₪)</Text>
-        <View style={styles.sizeRangeContainer}>
-          <View style={styles.sizeInputContainer}>
-            <Input
-              label="Min Price"
-              placeholder="1000"
-              value={data.minPrice?.toString() || ""}
-              onChangeText={(text) =>
-                onUpdate({ minPrice: text ? parseInt(text) : undefined })
-              }
-              keyboardType="numeric"
-              style={styles.sizeInput}
-            />
-          </View>
-          <Text style={styles.sizeRangeSeparator}>to</Text>
-          <View style={styles.sizeInputContainer}>
-            <Input
-              label="Max Price"
-              placeholder="8000"
-              value={data.maxPrice?.toString() || ""}
-              onChangeText={(text) =>
-                onUpdate({ maxPrice: text ? parseInt(text) : undefined })
-              }
-              keyboardType="numeric"
-              style={styles.sizeInput}
-            />
-          </View>
-        </View>
+        <DualRangeSlider
+          label="Monthly Rent Range"
+          minValue={priceRange.min}
+          maxValue={priceRange.max}
+          onRangeChange={handlePriceRangeChange}
+          minimumRange={500}
+          maximumRange={10000}
+          step={50}
+          unit="₪"
+        />
       </View>
 
       {/* Property Type */}
@@ -384,105 +402,223 @@ function PriceLocationStep({ data, onUpdate }: FilterStepProps) {
   );
 }
 
-// Review Step Component
-function ReviewStep({ data, onUpdate }: FilterStepProps) {
-  const getFilterSummary = () => {
-    const filters = [];
-
-    if (data.bedrooms) {
-      filters.push(
-        `${data.bedrooms === 4 ? "4+" : data.bedrooms} bedroom${
-          data.bedrooms > 1 ? "s" : ""
-        }`
-      );
-    }
-
-    if (data.bathrooms) {
-      filters.push(
-        `${data.bathrooms === 3 ? "3+" : data.bathrooms} bathroom${
-          data.bathrooms > 1 ? "s" : ""
-        }`
-      );
-    }
-
-    if (data.hasLivingRoom === true) {
-      filters.push("Living room required");
-    } else if (data.hasLivingRoom === false) {
-      filters.push("Living room not required");
-    }
-
-    if (data.minSize || data.maxSize) {
-      const min = data.minSize || 0;
-      const max = data.maxSize || "∞";
-      filters.push(`Size: ${min}-${max} m²`);
-    }
-
-    if (data.renovation && data.renovation !== "any") {
-      const renovationLabels = {
-        new: "✨ New",
-        renovated: "🛠️ Renovated",
-        needs_work: "🏚️ Needs work",
-      };
-      filters.push(renovationLabels[data.renovation]);
-    }
-
-    if (data.additionalRooms && data.additionalRooms.length > 0) {
-      filters.push(
-        `${data.additionalRooms.length} additional room${
-          data.additionalRooms.length > 1 ? "s" : ""
-        }`
-      );
-    }
-
-    if (data.amenities && data.amenities.length > 0) {
-      filters.push(
-        `${data.amenities.length} amenit${
-          data.amenities.length > 1 ? "ies" : "y"
-        }`
-      );
-    }
-
-    if (data.minPrice || data.maxPrice) {
-      const min = data.minPrice || 0;
-      const max = data.maxPrice || "∞";
-      filters.push(`Price: ₪${min}-${max}/month`);
-    }
-
-    if (data.propertyType && data.propertyType !== "any") {
-      const typeLabels = {
-        entire_place: "Entire Place",
-        room: "Room",
-        shared_room: "Shared Room",
-      };
-      filters.push(typeLabels[data.propertyType]);
-    }
-
-    return filters;
+// Summary Review Modal Component
+function SummaryReviewModal({
+  visible,
+  filterData,
+  onClose,
+  onConfirmApply,
+}: {
+  visible: boolean;
+  filterData: FilterData;
+  onClose: () => void;
+  onConfirmApply: () => void;
+}) {
+  const getSelectedCount = () => {
+    let count = 0;
+    if (filterData.propertyType && filterData.propertyType !== "any") count++;
+    if (filterData.bedrooms && filterData.bedrooms.length > 0) count++;
+    if (filterData.bathrooms && filterData.bathrooms !== 3) count++;
+    if (filterData.hasLivingRoom !== undefined) count++;
+    if (filterData.minSize || filterData.maxSize) count++;
+    if (filterData.renovation && filterData.renovation !== "any") count++;
+    if (filterData.additionalRooms && filterData.additionalRooms.length > 0)
+      count++;
+    if (filterData.amenities && filterData.amenities.length > 0) count++;
+    if (filterData.minPrice || filterData.maxPrice) count++;
+    return count;
   };
 
-  const filters = getFilterSummary();
+  const renderFilterItems = () => {
+    const items = [];
+
+    if (filterData.propertyType && filterData.propertyType !== "any") {
+      const typeLabels = {
+        entire_place: "🏠 Entire Place",
+        room: "🚪 Private Room",
+        shared_room: "👥 Shared Room",
+      };
+      items.push(
+        <View key="propertyType" style={styles.reviewFilterItem}>
+          <Text style={styles.reviewFilterLabel}>Property Type</Text>
+          <Text style={styles.reviewFilterValue}>
+            {typeLabels[filterData.propertyType]}
+          </Text>
+        </View>
+      );
+    }
+
+    if (filterData.bedrooms && filterData.bedrooms.length > 0) {
+      const bedroomLabels = filterData.bedrooms.map((count) =>
+        count === 6 ? "6+" : count.toString()
+      );
+      items.push(
+        <View key="bedrooms" style={styles.reviewFilterItem}>
+          <Text style={styles.reviewFilterLabel}>🛏️ Bedrooms</Text>
+          <Text style={styles.reviewFilterValue}>
+            {bedroomLabels.join(", ")}
+          </Text>
+        </View>
+      );
+    }
+
+    if (filterData.bathrooms && filterData.bathrooms !== 3) {
+      items.push(
+        <View key="bathrooms" style={styles.reviewFilterItem}>
+          <Text style={styles.reviewFilterLabel}>🚿 Bathrooms</Text>
+          <Text style={styles.reviewFilterValue}>
+            {filterData.bathrooms === 3 ? "3+" : filterData.bathrooms}
+          </Text>
+        </View>
+      );
+    }
+
+    if (filterData.hasLivingRoom !== undefined) {
+      items.push(
+        <View key="livingRoom" style={styles.reviewFilterItem}>
+          <Text style={styles.reviewFilterLabel}>🏡 Living Room</Text>
+          <Text style={styles.reviewFilterValue}>
+            {filterData.hasLivingRoom ? "Required" : "Not Required"}
+          </Text>
+        </View>
+      );
+    }
+
+    if (filterData.minSize || filterData.maxSize) {
+      const sizeRange = `${filterData.minSize || 30} - ${
+        filterData.maxSize || 500
+      } m²`;
+      items.push(
+        <View key="size" style={styles.reviewFilterItem}>
+          <Text style={styles.reviewFilterLabel}>📏 Size Range</Text>
+          <Text style={styles.reviewFilterValue}>{sizeRange}</Text>
+        </View>
+      );
+    }
+
+    if (filterData.renovation && filterData.renovation !== "any") {
+      const renovationLabels: { [key: string]: string } = {
+        renovated: "✨ Renovated",
+        needs_work: "🔧 Needs Work",
+        new: "✨ Brand New",
+      };
+      items.push(
+        <View key="renovation" style={styles.reviewFilterItem}>
+          <Text style={styles.reviewFilterLabel}>🏗️ Condition</Text>
+          <Text style={styles.reviewFilterValue}>
+            {renovationLabels[filterData.renovation] || filterData.renovation}
+          </Text>
+        </View>
+      );
+    }
+
+    if (filterData.additionalRooms && filterData.additionalRooms.length > 0) {
+      items.push(
+        <View key="additionalRooms" style={styles.reviewFilterItem}>
+          <Text style={styles.reviewFilterLabel}>🏢 Additional Rooms</Text>
+          <Text style={styles.reviewFilterValue}>
+            {filterData.additionalRooms.length} room
+            {filterData.additionalRooms.length !== 1 ? "s" : ""}
+          </Text>
+        </View>
+      );
+    }
+
+    if (filterData.amenities && filterData.amenities.length > 0) {
+      items.push(
+        <View key="amenities" style={styles.reviewFilterItem}>
+          <Text style={styles.reviewFilterLabel}>✨ Amenities</Text>
+          <Text style={styles.reviewFilterValue}>
+            {filterData.amenities.length} amenit
+            {filterData.amenities.length !== 1 ? "ies" : "y"}
+          </Text>
+        </View>
+      );
+    }
+
+    if (filterData.minPrice || filterData.maxPrice) {
+      const priceRange = `₪${filterData.minPrice || 500} - ₪${
+        filterData.maxPrice || 10000
+      }`;
+      items.push(
+        <View key="price" style={styles.reviewFilterItem}>
+          <Text style={styles.reviewFilterLabel}>💰 Monthly Budget</Text>
+          <Text style={styles.reviewFilterValue}>{priceRange}</Text>
+        </View>
+      );
+    }
+
+    return items;
+  };
+
+  const items = renderFilterItems() || [];
 
   return (
-    <View style={styles.stepContainer}>
-      <Text style={styles.stepTitle}>Review Filters</Text>
-      <Text style={styles.stepSubtitle}>Review your filter preferences</Text>
-
-      <View style={styles.reviewContainer}>
-        {filters.length > 0 ? (
-          <View style={styles.filtersList}>
-            {filters.map((filter, index) => (
-              <View key={index} style={styles.filterItem}>
-                <Text style={styles.filterText}>• {filter}</Text>
-              </View>
-            ))}
+    <Modal visible={!!visible} animationType="fade" transparent>
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          {/* Modal Header */}
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>📋 Filter Summary</Text>
+            <TouchableOpacity onPress={onClose} style={styles.modalCloseButton}>
+              <Text style={styles.modalCloseIcon}>✕</Text>
+            </TouchableOpacity>
           </View>
-        ) : (
-          <Text style={styles.noFiltersText}>
-            No filters applied. You'll see all available apartments.
-          </Text>
-        )}
+
+          {/* Summary Info */}
+          <View style={styles.summaryHeader}>
+            <Text style={styles.summaryCount}>
+              {getSelectedCount()} filter{getSelectedCount() !== 1 ? "s" : ""}{" "}
+              applied
+            </Text>
+            <Text style={styles.summarySubtext}>
+              Ready to search with your preferences
+            </Text>
+          </View>
+
+          {/* Filter Details */}
+          <ScrollView
+            style={styles.summaryScroll}
+            showsVerticalScrollIndicator={false}
+          >
+            {items.length > 0 ? (
+              <View style={styles.summaryFiltersList}>
+                {items.map((item, index) => (
+                  <View key={index} style={{ marginBottom: spacing.sm }}>
+                    {item}
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <View style={styles.summaryEmptyState}>
+                <Text style={styles.summaryEmptyIcon}>🔍</Text>
+                <Text style={styles.summaryEmptyTitle}>No Filters Applied</Text>
+                <Text style={styles.summaryEmptyText}>
+                  All available properties will be shown
+                </Text>
+              </View>
+            )}
+          </ScrollView>
+
+          {/* Modal Footer */}
+          <View style={styles.modalFooter}>
+            <Button
+              title="Cancel"
+              onPress={onClose}
+              variant="secondary"
+              style={styles.modalButton}
+            />
+            <View style={{ width: spacing.md }} />
+            <Button
+              title="Apply Filters"
+              onPress={onConfirmApply}
+              variant="primary"
+              style={styles.modalButton}
+            />
+          </View>
+        </View>
       </View>
-    </View>
+    </Modal>
   );
 }
 
@@ -492,45 +628,54 @@ export default function FilterBottomSheet({
   onApply,
   initialFilters = {},
 }: FilterBottomSheetProps) {
-  const [currentStep, setCurrentStep] = useState(0);
+  const [activeTab, setActiveTab] = useState("basic");
   const [filterData, setFilterData] = useState<FilterData>(initialFilters);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [tabAnimation] = useState(new Animated.Value(0));
 
   const updateData = (updates: Partial<FilterData>) => {
     setFilterData((prev) => ({ ...prev, ...updates }));
   };
 
-  const nextStep = () => {
-    if (currentStep < STEPS.length - 1) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
-
-  const prevStep = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
   const handleApply = () => {
+    setShowSummaryModal(true);
+  };
+
+  const handleConfirmApply = () => {
     onApply(filterData);
     onClose();
   };
 
   const handleReset = () => {
     setFilterData({});
-    setCurrentStep(0);
+    setActiveTab("basic");
   };
 
-  const renderCurrentStep = () => {
-    switch (currentStep) {
-      case 0:
+  const handleTabChange = (tabId: string) => {
+    Animated.sequence([
+      Animated.timing(tabAnimation, {
+        toValue: 0.8,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(tabAnimation, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    setActiveTab(tabId);
+  };
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "basic":
         return <BasicDetailsStep data={filterData} onUpdate={updateData} />;
-      case 1:
+      case "amenities":
         return <AmenitiesStep data={filterData} onUpdate={updateData} />;
-      case 2:
+      case "price":
         return <PriceLocationStep data={filterData} onUpdate={updateData} />;
-      case 3:
-        return <ReviewStep data={filterData} onUpdate={updateData} />;
       default:
         return <BasicDetailsStep data={filterData} onUpdate={updateData} />;
     }
@@ -540,7 +685,7 @@ export default function FilterBottomSheet({
     <Modal
       visible={visible}
       animationType="slide"
-      presentationStyle="pageSheet"
+      presentationStyle="formSheet"
       onRequestClose={onClose}
     >
       <SafeAreaView style={styles.container} edges={["top"]}>
@@ -555,56 +700,70 @@ export default function FilterBottomSheet({
           </TouchableOpacity>
         </View>
 
-        {/* Progress Indicator */}
-        <View style={styles.progressContainer}>
-          <View style={styles.progressBar}>
-            {STEPS.map((_, index) => (
-              <View
-                key={index}
+        {/* Tab Navigation */}
+        <View style={styles.tabContainer}>
+          {TABS.map((tab) => {
+            const hasData = getTabHasData(tab.id, filterData);
+            return (
+              <TouchableOpacity
+                key={tab.id}
                 style={[
-                  styles.progressDot,
-                  index <= currentStep && styles.progressDotActive,
+                  styles.tab,
+                  activeTab === tab.id && styles.tabActive,
+                  hasData && styles.tabHasData,
                 ]}
-              />
-            ))}
-          </View>
-          <Text style={styles.progressText}>
-            Step {currentStep + 1} of {STEPS.length}: {STEPS[currentStep]}
-          </Text>
+                onPress={() => handleTabChange(tab.id)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.tabContent}>
+                  <Text
+                    style={[
+                      styles.tabIcon,
+                      activeTab === tab.id && styles.tabIconActive,
+                      hasData && styles.tabIconHasData,
+                    ]}
+                  >
+                    {tab.icon}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.tabLabel,
+                      activeTab === tab.id && styles.tabLabelActive,
+                      hasData && styles.tabLabelHasData,
+                    ]}
+                  >
+                    {tab.label}
+                  </Text>
+                  {hasData && <View style={styles.tabDataIndicator} />}
+                </View>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         {/* Content */}
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {renderCurrentStep()}
+          {renderTabContent()}
         </ScrollView>
 
         {/* Footer */}
         <View style={styles.footer}>
-          <View style={styles.footerButtons}>
-            {currentStep > 0 && (
-              <Button
-                title="Back"
-                onPress={prevStep}
-                variant="secondary"
-                style={styles.footerButton}
-              />
-            )}
-            <Button
-              title={
-                currentStep === STEPS.length - 1 ? "Apply Filters" : "Next"
-              }
-              onPress={
-                currentStep === STEPS.length - 1 ? handleApply : nextStep
-              }
-              variant="primary"
-              style={
-                currentStep === 0
-                  ? styles.footerButtonFull
-                  : styles.footerButton
-              }
-            />
-          </View>
+          <Button
+            title="Apply Filters"
+            onPress={handleApply}
+            variant="primary"
+            size="lg"
+            style={styles.applyButton}
+          />
         </View>
+
+        {/* Summary Review Modal */}
+        <SummaryReviewModal
+          visible={showSummaryModal}
+          filterData={filterData}
+          onClose={() => setShowSummaryModal(false)}
+          onConfirmApply={handleConfirmApply}
+        />
       </SafeAreaView>
     </Modal>
   );
@@ -645,33 +804,78 @@ const styles = StyleSheet.create({
     color: colors.primary[600],
     fontWeight: "500",
   },
-  progressContainer: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+  tabContainer: {
+    flexDirection: "row",
     backgroundColor: colors.neutral[0],
     borderBottomWidth: 1,
-    borderBottomColor: colors.neutral[100],
+    borderBottomColor: colors.neutral[200],
+    paddingHorizontal: spacing.sm,
+    paddingTop: spacing.sm,
   },
-  progressBar: {
-    flexDirection: "row",
-    justifyContent: "center",
+  tab: {
+    flex: 1,
     alignItems: "center",
-    marginBottom: spacing.sm,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
+    marginHorizontal: spacing.xs,
+    borderRadius: borderRadius.md,
+    borderBottomWidth: 0,
+    backgroundColor: colors.neutral[50],
+    borderWidth: 1,
+    borderColor: colors.neutral[200],
   },
-  progressDot: {
+  tabActive: {
+    backgroundColor: colors.primary[50],
+    borderColor: colors.primary[300],
+    shadowColor: colors.primary[500],
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  tabIcon: {
+    fontSize: 18,
+    marginBottom: spacing.xs,
+    opacity: 0.7,
+  },
+  tabIconActive: {
+    opacity: 1,
+  },
+  tabLabel: {
+    ...textStyles.caption,
+    color: colors.neutral[600],
+    fontSize: 11,
+    fontWeight: "500",
+    textAlign: "center",
+  },
+  tabLabelActive: {
+    color: colors.primary[700],
+    fontWeight: "600",
+  },
+  tabHasData: {
+    backgroundColor: colors.success[50],
+    borderColor: colors.success[200],
+  },
+  tabContent: {
+    alignItems: "center",
+    position: "relative",
+  },
+  tabIconHasData: {
+    color: colors.success[600],
+  },
+  tabLabelHasData: {
+    color: colors.success[700],
+  },
+  tabDataIndicator: {
+    position: "absolute",
+    top: -2,
+    right: -2,
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.neutral[300],
-    marginHorizontal: 4,
-  },
-  progressDotActive: {
-    backgroundColor: colors.primary[500],
-  },
-  progressText: {
-    ...textStyles.caption,
-    color: colors.neutral[600],
-    textAlign: "center",
+    backgroundColor: colors.success[500],
+    borderWidth: 1,
+    borderColor: colors.neutral[0],
   },
   content: {
     flex: 1,
@@ -683,16 +887,130 @@ const styles = StyleSheet.create({
     backgroundColor: colors.neutral[0],
     borderTopWidth: 1,
     borderTopColor: colors.neutral[200],
+    shadowColor: colors.neutral[900],
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
   },
-  footerButtons: {
+  applyButton: {
+    width: "100%",
+    minHeight: 48,
+  },
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: spacing.lg,
+  },
+  modalContent: {
+    backgroundColor: colors.neutral[0],
+    borderRadius: borderRadius.lg,
+    width: "100%",
+    maxHeight: "80%",
+    shadowColor: colors.neutral[900],
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  modalHeader: {
     flexDirection: "row",
-    gap: spacing.md,
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.neutral[100],
   },
-  footerButton: {
+  modalTitle: {
+    ...textStyles.h3,
+    color: colors.neutral[900],
+    fontWeight: "600",
+  },
+  modalCloseButton: {
+    padding: spacing.sm,
+  },
+  modalCloseIcon: {
+    fontSize: 18,
+    color: colors.neutral[600],
+    fontWeight: "600",
+  },
+  summaryHeader: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.primary[50],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.primary[100],
+  },
+  summaryCount: {
+    ...textStyles.h3,
+    color: colors.primary[700],
+    fontWeight: "600",
+    marginBottom: spacing.xs,
+  },
+  summarySubtext: {
+    ...textStyles.body,
+    color: colors.primary[600],
+  },
+  summaryScroll: {
+    maxHeight: 300,
+  },
+  summaryFiltersList: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+  },
+  summaryEmptyState: {
+    padding: spacing.xl,
+    alignItems: "center",
+  },
+  summaryEmptyIcon: {
+    fontSize: 48,
+    marginBottom: spacing.md,
+  },
+  summaryEmptyTitle: {
+    ...textStyles.h3,
+    fontWeight: "600",
+    color: colors.neutral[700],
+    marginBottom: spacing.sm,
+  },
+  summaryEmptyText: {
+    ...textStyles.body,
+    color: colors.neutral[600],
+    textAlign: "center",
+  },
+  modalFooter: {
+    flexDirection: "row",
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.neutral[100],
+  },
+  modalButton: {
     flex: 1,
   },
-  footerButtonFull: {
-    flex: 1,
+  // Review filter item styles for modal
+  reviewFilterItem: {
+    backgroundColor: colors.primary[50],
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.primary[100],
+  },
+  reviewFilterLabel: {
+    ...textStyles.body,
+    fontWeight: "600",
+    color: colors.primary[700],
+    marginBottom: spacing.xs,
+    fontSize: 14,
+  },
+  reviewFilterValue: {
+    ...textStyles.body,
+    color: colors.neutral[900],
+    fontWeight: "500",
+    fontSize: 15,
   },
   stepContainer: {
     paddingVertical: spacing.lg,
@@ -804,28 +1122,5 @@ const styles = StyleSheet.create({
     color: colors.primary[700],
     fontWeight: "600",
     textAlign: "center",
-  },
-  reviewContainer: {
-    backgroundColor: colors.neutral[0],
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.neutral[200],
-  },
-  filtersList: {
-    gap: spacing.sm,
-  },
-  filterItem: {
-    paddingVertical: spacing.xs,
-  },
-  filterText: {
-    ...textStyles.body,
-    color: colors.neutral[700],
-  },
-  noFiltersText: {
-    ...textStyles.body,
-    color: colors.neutral[600],
-    textAlign: "center",
-    fontStyle: "italic",
   },
 });

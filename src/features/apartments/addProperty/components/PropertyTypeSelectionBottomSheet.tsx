@@ -15,28 +15,7 @@ import {
 } from "../../../../shared/constants/tokens";
 import { PropertyType } from "../types/PropertyCreationData";
 import BottomSheet from "../../../../shared/components/ui/BottomSheet";
-
-const PROPERTY_TYPES = [
-  {
-    id: "entire_place" as PropertyType,
-    label: "An entire place",
-    icon: "🏠",
-    description: "Guests have the whole place to themselves.",
-  },
-  {
-    id: "room" as PropertyType,
-    label: "A room",
-    icon: "🚪",
-    description:
-      "Guests have their own room in a home, plus access to shared spaces.",
-  },
-  {
-    id: "shared_room" as PropertyType,
-    label: "A shared room",
-    icon: "👥",
-    description: "Guests sleep in a shared room in a property.",
-  },
-];
+import { PROPERTY_TYPES } from "../../../../core/types/propertyObjects/PropertyCategoryObject";
 
 interface PropertyTypeBottomSheetProps {
   visible: boolean;

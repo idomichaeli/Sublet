@@ -56,6 +56,9 @@ export default function ListingsSection({
       showRating={true}
       showStats={true}
       showActions={true}
+      showFavorite={true}
+      isFavorite={item.isFavorite}
+      onFavoritePress={() => onFavoritePress(item.id)}
       variant="detailed"
     />
   );
