@@ -36,6 +36,8 @@ export interface SwipeCardData {
   ownerId?: string;
   availableFrom?: string; // YYYY-MM-DD format
   availableTo?: string; // YYYY-MM-DD format
+  description?: string; // Property description
+  propertyType?: string; // Type of property (apartment, house, etc.)
 }
 
 interface SwipeCardProps {

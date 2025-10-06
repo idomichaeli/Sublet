@@ -9,7 +9,7 @@ import {
 } from "../../features/swipe";
 import { ChatDetailScreen } from "../../features/favorites";
 import { colors, textStyles } from "../../shared/constants/tokens";
-import { FavoritesTabProvider } from "../../shared/hooks/state/FavoritesTabContext";
+import { FavoritesTabProvider } from "../../core/services/FavoritesTabContext";
 import { TelAvivLocation } from "../../shared/constants/locations";
 import { SwipeCardData } from "../../features/swipe/components/SwipeCard";
 

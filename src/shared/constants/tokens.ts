@@ -210,6 +210,12 @@ export const textStyles = {
     lineHeight: typography.lineHeight.normal * typography.fontSize.xl,
     fontWeight: typography.fontWeight.semiBold,
   },
+  h4: {
+    fontFamily: typography.fontFamily.medium,
+    fontSize: typography.fontSize.lg,
+    lineHeight: typography.lineHeight.normal * typography.fontSize.lg,
+    fontWeight: typography.fontWeight.medium,
+  },
   body: {
     fontFamily: typography.fontFamily.regular,
     fontSize: typography.fontSize.base,
@@ -274,12 +280,26 @@ export const statusColors = {
 
 // Opacity variants for colors
 export const colorOpacity = {
+  // 0% opacity (transparent)
+  '0': '00',
+  // 5% opacity
+  '05': '0D',
+  // 8% opacity
+  '08': '14',
   // 10% opacity
   '10': '1A',
+  // 12% opacity
+  '12': '1F',
+  // 15% opacity
+  '15': '26',
   // 20% opacity  
   '20': '33',
+  // 25% opacity
+  '25': '40',
   // 30% opacity
   '30': '4D',
+  // 35% opacity
+  '35': '59',
   // 40% opacity
   '40': '66',
   // 50% opacity
@@ -292,6 +312,8 @@ export const colorOpacity = {
   '80': 'CC',
   // 90% opacity
   '90': 'E6',
+  // 95% opacity
+  '95': 'F2',
 } as const;
 
 // Helper function to create colors with opacity
@@ -299,7 +321,7 @@ export const withOpacity = (color: string, opacity: keyof typeof colorOpacity): 
   return color + colorOpacity[opacity];
 };
 
-// Liquid Glass Design Tokens
+// Liquid Glass Design Tokens - iOS 26 Style
 export const liquidGlass = {
   background: withOpacity(colors.neutral[0], '10'),
   backgroundDark: withOpacity(colors.neutral[900], '10'),
@@ -315,5 +337,35 @@ export const liquidGlass = {
   backdrop: {
     blur: 20,
     saturation: 1.2,
+  },
+  // Enhanced iOS 26 Liquid Glass Properties
+  glass: {
+    light: {
+      background: withOpacity(colors.neutral[0], '15'),
+      border: withOpacity(colors.neutral[0], '30'),
+      shadow: withOpacity(colors.neutral[900], '08'),
+    },
+    medium: {
+      background: withOpacity(colors.neutral[0], '25'),
+      border: withOpacity(colors.neutral[0], '40'),
+      shadow: withOpacity(colors.neutral[900], '12'),
+    },
+    strong: {
+      background: withOpacity(colors.neutral[0], '35'),
+      border: withOpacity(colors.neutral[0], '50'),
+      shadow: withOpacity(colors.neutral[900], '15'),
+    },
+  },
+  blur: {
+    light: 10,
+    medium: 20,
+    strong: 30,
+  },
+  radius: {
+    sm: 12,
+    md: 16,
+    lg: 20,
+    xl: 24,
+    '2xl': 32,
   },
 } as const;

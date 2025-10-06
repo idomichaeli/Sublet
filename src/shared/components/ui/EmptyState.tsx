@@ -1,10 +1,14 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
 import {
   colors,
   spacing,
   textStyles,
   borderRadius,
+  shadows,
+  withOpacity,
 } from "../../constants/tokens";
 
 interface EmptyStateProps {
@@ -28,23 +32,50 @@ export default function EmptyState({
 }: EmptyStateProps) {
   return (
     <View style={styles.container}>
-      <View style={styles.iconContainer}>
+      <LinearGradient
+        colors={[colors.primary[50], colors.primary[100]]}
+        style={styles.iconContainer}
+      >
         <Text style={styles.icon}>{icon}</Text>
-      </View>
+      </LinearGradient>
 
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.subtitle}>{subtitle}</Text>
 
-      {buttonText && onButtonPress && (
-        <TouchableOpacity style={styles.button} onPress={onButtonPress}>
-          <Text style={styles.buttonText}>{buttonText}</Text>
-        </TouchableOpacity>
-      )}
-      {actionLabel && onActionPress && (
-        <TouchableOpacity style={styles.button} onPress={onActionPress}>
-          <Text style={styles.buttonText}>{actionLabel}</Text>
-        </TouchableOpacity>
-      )}
+      {(buttonText && onButtonPress) || (actionLabel && onActionPress) ? (
+        <View style={styles.buttonContainer}>
+          {buttonText && onButtonPress && (
+            <TouchableOpacity style={styles.button} onPress={onButtonPress}>
+              <LinearGradient
+                colors={[colors.primary[500], colors.primary[600]]}
+                style={styles.buttonGradient}
+              >
+                <Ionicons
+                  name="add-circle"
+                  size={20}
+                  color={colors.neutral[0]}
+                />
+                <Text style={styles.buttonText}>{buttonText}</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          )}
+          {actionLabel && onActionPress && (
+            <TouchableOpacity style={styles.button} onPress={onActionPress}>
+              <LinearGradient
+                colors={[colors.primary[500], colors.primary[600]]}
+                style={styles.buttonGradient}
+              >
+                <Ionicons
+                  name="add-circle"
+                  size={20}
+                  color={colors.neutral[0]}
+                />
+                <Text style={styles.buttonText}>{actionLabel}</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          )}
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -57,23 +88,23 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
   },
   iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.neutral[100],
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xl,
+    ...shadows.md,
   },
   icon: {
-    fontSize: 32,
-    color: colors.neutral[400],
+    fontSize: 48,
   },
   title: {
-    ...textStyles.h3,
+    ...textStyles.h2,
     color: colors.neutral[900],
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
     textAlign: "center",
+    fontWeight: "700",
   },
   subtitle: {
     ...textStyles.body,
@@ -81,15 +112,27 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 24,
     marginBottom: spacing.xl,
+    fontSize: 16,
+  },
+  buttonContainer: {
+    width: "100%",
+    maxWidth: 280,
   },
   button: {
-    backgroundColor: colors.primary[500],
+    borderRadius: borderRadius.xl,
+    ...shadows.md,
+  },
+  buttonGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-    borderRadius: borderRadius.lg,
+    paddingVertical: spacing.lg,
+    borderRadius: borderRadius.xl,
+    gap: spacing.sm,
   },
   buttonText: {
-    ...textStyles.body,
+    ...textStyles.button,
     color: colors.neutral[0],
     fontWeight: "600",
   },

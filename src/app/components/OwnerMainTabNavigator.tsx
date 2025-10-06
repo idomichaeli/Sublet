@@ -6,9 +6,9 @@ import { colors, spacing, liquidGlass } from "../../shared/constants/tokens";
 import {
   OwnerHomeScreen,
   OwnerChatScreen,
-  OwnerProfileScreen,
   InterestedRentersScreen,
 } from "../../features/apartments";
+import { OwnerProfileScreen } from "../../features/profile";
 
 export type OwnerBottomTabParamList = {
   Home: undefined;

@@ -9,7 +9,7 @@ import {
   withOpacity,
 } from "../../constants/tokens";
 
-interface MessageBubbleProps {
+export interface MessageBubbleProps {
   message: string;
   isOwner: boolean;
   timestamp: string;

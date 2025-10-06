@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
 import {
   colors,
   spacing,
@@ -8,6 +9,7 @@ import {
   textStyles,
   shadows,
   withOpacity,
+  liquidGlass,
 } from "../../../shared/constants/tokens";
 import { PropertyObject } from "../../../core/types/propertyObjects/PropertyObject";
 import {
@@ -108,19 +110,39 @@ export default function PropertyObjectCard({
           {property.photos && property.photos.length > 0 ? (
             <Image source={{ uri: property.photos[0] }} style={styles.image} />
           ) : (
-            <View style={styles.imagePlaceholder}>
-              <Text style={styles.placeholderIcon}>🏠</Text>
+            <LinearGradient
+              colors={[colors.neutral[100], colors.neutral[200]]}
+              style={styles.imagePlaceholder}
+            >
+              <Ionicons name="home" size={48} color={colors.neutral[400]} />
               <Text style={styles.placeholderText}>No Image</Text>
-            </View>
+            </LinearGradient>
           )}
+
+          {/* Enhanced Status Badge */}
           <View
             style={[
               styles.statusBadge,
               { backgroundColor: getStatusBackgroundColor() },
             ]}
           >
+            <View
+              style={[styles.statusDot, { backgroundColor: getStatusColor() }]}
+            />
             <Text style={[styles.statusText, { color: getStatusColor() }]}>
               {getStatusLabel()}
+            </Text>
+          </View>
+
+          {/* Property Type Badge */}
+          <View style={styles.typeBadge}>
+            <Ionicons
+              name={property.propertyCategory === "house" ? "home" : "business"}
+              size={12}
+              color={colors.neutral[600]}
+            />
+            <Text style={styles.typeText}>
+              {property.propertyCategory === "house" ? "House" : "Apartment"}
             </Text>
           </View>
         </View>
@@ -130,9 +152,12 @@ export default function PropertyObjectCard({
             <Text style={styles.title} numberOfLines={2}>
               {getPropertyDisplayName(property)}
             </Text>
-            <Text style={styles.location} numberOfLines={1}>
-              {getPropertyAddress(property)}
-            </Text>
+            <View style={styles.locationContainer}>
+              <Ionicons name="location" size={14} color={colors.neutral[500]} />
+              <Text style={styles.location} numberOfLines={1}>
+                {getPropertyAddress(property)}
+              </Text>
+            </View>
           </View>
 
           <View style={styles.metaInfo}>
@@ -142,7 +167,7 @@ export default function PropertyObjectCard({
             </View>
             {rating > 0 && (
               <View style={styles.ratingContainer}>
-                <Text style={styles.ratingIcon}>⭐</Text>
+                <Ionicons name="star" size={14} color={colors.warning[500]} />
                 <Text style={styles.rating}>{rating}</Text>
               </View>
             )}
@@ -150,35 +175,41 @@ export default function PropertyObjectCard({
 
           <View style={styles.propertyDetails}>
             <View style={styles.detailItem}>
-              <Text style={styles.detailIcon}>🛏️</Text>
+              <Ionicons name="bed" size={14} color={colors.neutral[600]} />
               <Text style={styles.detailText}>
                 {getPropertyRooms(property)} bed
               </Text>
             </View>
             <View style={styles.detailItem}>
-              <Text style={styles.detailIcon}>🚿</Text>
+              <Ionicons name="water" size={14} color={colors.neutral[600]} />
               <Text style={styles.detailText}>
                 {property.customBathrooms || property.bathrooms} bath
               </Text>
             </View>
             <View style={styles.detailItem}>
-              <Text style={styles.detailIcon}>📐</Text>
+              <Ionicons name="resize" size={14} color={colors.neutral[600]} />
               <Text style={styles.detailText}>{getPropertySize(property)}</Text>
             </View>
           </View>
 
           <View style={styles.stats}>
             <View style={styles.statItem}>
-              <Text style={styles.statIcon}>👁️</Text>
+              <Ionicons name="eye" size={16} color={colors.neutral[500]} />
               <Text style={styles.statText}>{views}</Text>
+              <Text style={styles.statLabel}>views</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={styles.statIcon}>❤️</Text>
+              <Ionicons name="heart" size={16} color={colors.error[500]} />
               <Text style={styles.statText}>{interests}</Text>
+              <Text style={styles.statLabel}>interests</Text>
             </View>
             {nextBooking && (
               <View style={styles.statItem}>
-                <Text style={styles.statIcon}>📅</Text>
+                <Ionicons
+                  name="calendar"
+                  size={16}
+                  color={colors.warning[500]}
+                />
                 <Text style={styles.statText} numberOfLines={1}>
                   {nextBooking}
                 </Text>
@@ -193,8 +224,16 @@ export default function PropertyObjectCard({
                   style={[styles.actionButton, styles.editButton]}
                   onPress={onEditPress}
                 >
-                  <Text style={styles.actionIcon}>✏️</Text>
-                  <Text style={styles.actionText}>Edit</Text>
+                  <Ionicons
+                    name="create"
+                    size={16}
+                    color={colors.primary[600]}
+                  />
+                  <Text
+                    style={[styles.actionText, { color: colors.primary[600] }]}
+                  >
+                    Edit
+                  </Text>
                 </TouchableOpacity>
               )}
 
@@ -203,8 +242,19 @@ export default function PropertyObjectCard({
                   style={[styles.actionButton, styles.rentersButton]}
                   onPress={onViewRentersPress}
                 >
-                  <Text style={styles.actionIcon}>👥</Text>
-                  <Text style={styles.actionText}>Renters</Text>
+                  <Ionicons
+                    name="people"
+                    size={16}
+                    color={colors.secondary[600]}
+                  />
+                  <Text
+                    style={[
+                      styles.actionText,
+                      { color: colors.secondary[600] },
+                    ]}
+                  >
+                    Renters
+                  </Text>
                 </TouchableOpacity>
               )}
 
@@ -213,8 +263,12 @@ export default function PropertyObjectCard({
                   style={[styles.actionButton, styles.deleteButton]}
                   onPress={onDeletePress}
                 >
-                  <Text style={styles.actionIcon}>🗑️</Text>
-                  <Text style={styles.actionText}>Delete</Text>
+                  <Ionicons name="trash" size={16} color={colors.error[600]} />
+                  <Text
+                    style={[styles.actionText, { color: colors.error[600] }]}
+                  >
+                    Delete
+                  </Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -230,12 +284,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   card: {
-    backgroundColor: colors.neutral[0],
-    borderRadius: borderRadius.xl,
+    backgroundColor: liquidGlass.glass.light.background,
+    borderRadius: liquidGlass.radius.xl,
     overflow: "hidden",
-    ...shadows.md,
     borderWidth: 1,
-    borderColor: colors.neutral[200],
+    borderColor: liquidGlass.glass.light.border,
+    ...shadows.md,
+    shadowColor: liquidGlass.glass.light.shadow,
   },
   imageContainer: {
     position: "relative",
@@ -249,7 +304,6 @@ const styles = StyleSheet.create({
   imagePlaceholder: {
     width: "100%",
     height: "100%",
-    backgroundColor: colors.neutral[100],
     justifyContent: "center",
     alignItems: "center",
   },
@@ -260,21 +314,55 @@ const styles = StyleSheet.create({
   placeholderText: {
     ...textStyles.caption,
     color: colors.neutral[400],
+    marginTop: spacing.xs,
   },
   statusBadge: {
     position: "absolute",
     top: spacing.sm,
     right: spacing.sm,
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
-    borderRadius: borderRadius.md,
+    borderRadius: liquidGlass.radius.md,
     borderWidth: 1,
-    borderColor: withOpacity(colors.neutral[0], "20"),
+    borderColor: liquidGlass.glass.medium.border,
+    backgroundColor: liquidGlass.glass.medium.background,
+    ...shadows.sm,
+    shadowColor: liquidGlass.glass.medium.shadow,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: spacing.xs,
   },
   statusText: {
     ...textStyles.caption,
     fontWeight: "600",
     fontSize: 12,
+  },
+  typeBadge: {
+    position: "absolute",
+    top: spacing.sm,
+    left: spacing.sm,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: liquidGlass.glass.strong.background,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: liquidGlass.radius.md,
+    gap: spacing.xs,
+    borderWidth: 1,
+    borderColor: liquidGlass.glass.strong.border,
+    ...shadows.sm,
+    shadowColor: liquidGlass.glass.strong.shadow,
+  },
+  typeText: {
+    ...textStyles.caption,
+    color: colors.neutral[600],
+    fontWeight: "500",
+    fontSize: 11,
   },
   content: {
     padding: spacing.lg,
@@ -288,10 +376,16 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
     fontWeight: "600",
   },
+  locationContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+  },
   location: {
     ...textStyles.body,
     color: colors.neutral[600],
     fontSize: 14,
+    flex: 1,
   },
   metaInfo: {
     flexDirection: "row",
@@ -361,14 +455,27 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.xs,
+    backgroundColor: liquidGlass.glass.light.background,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: liquidGlass.radius.md,
+    borderWidth: 1,
+    borderColor: liquidGlass.glass.light.border,
   },
   statIcon: {
     fontSize: 16,
   },
   statText: {
     ...textStyles.caption,
-    color: colors.neutral[600],
-    fontWeight: "500",
+    color: colors.neutral[700],
+    fontWeight: "600",
+    fontSize: 12,
+  },
+  statLabel: {
+    ...textStyles.caption,
+    color: colors.neutral[500],
+    fontWeight: "400",
+    fontSize: 10,
   },
   actions: {
     flexDirection: "row",
@@ -381,23 +488,29 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.lg,
+    borderRadius: liquidGlass.radius.lg,
     gap: spacing.xs,
   },
   editButton: {
-    backgroundColor: colors.primary[50],
+    backgroundColor: liquidGlass.glass.light.background,
     borderWidth: 1,
-    borderColor: colors.primary[200],
+    borderColor: liquidGlass.glass.light.border,
+    ...shadows.sm,
+    shadowColor: liquidGlass.glass.light.shadow,
   },
   rentersButton: {
-    backgroundColor: colors.secondary[50],
+    backgroundColor: liquidGlass.glass.light.background,
     borderWidth: 1,
-    borderColor: colors.secondary[200],
+    borderColor: liquidGlass.glass.light.border,
+    ...shadows.sm,
+    shadowColor: liquidGlass.glass.light.shadow,
   },
   deleteButton: {
-    backgroundColor: colors.error[50],
+    backgroundColor: liquidGlass.glass.light.background,
     borderWidth: 1,
-    borderColor: colors.error[200],
+    borderColor: liquidGlass.glass.light.border,
+    ...shadows.sm,
+    shadowColor: liquidGlass.glass.light.shadow,
   },
   actionIcon: {
     fontSize: 16,

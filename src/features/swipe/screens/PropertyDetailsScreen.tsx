@@ -20,6 +20,7 @@ import {
   withOpacity,
 } from "../../../shared/constants/tokens";
 import { OwnerProperty } from "../../../core/types/ownerPropertyList";
+import { SwipeCardData } from "../components/SwipeCard";
 import Button from "../../../shared/components/ui/Button";
 import { useFavoritesStore } from "../../../core/services/savedPropertiesStore";
 import { renterPropertyService } from "../../../core/services/renterPropertyService";
@@ -116,7 +117,28 @@ export default function ListingDetailsScreen({
     if (isFavorite(property.id)) {
       removeFavorite(property.id);
     } else {
-      addFavorite(property.id);
+      // Convert OwnerProperty to SwipeCardData format
+      const swipeCardData: SwipeCardData = {
+        id: property.id,
+        title: getPropertyDisplayName(property),
+        price:
+          parseFloat(getPropertyPrice(property).replace(/[^\d.]/g, "")) || 0,
+        neighborhood: property.area?.name || "Unknown",
+        location: getPropertyAddress(property),
+        imageUrl: property.photos?.[0] || "",
+        photos: property.photos || [],
+        rooms: property.bedrooms || 0,
+        bathrooms: property.bathrooms || 0,
+        size: parseFloat(getPropertySize(property).replace(/[^\d.]/g, "")) || 0,
+        floor: property.floor || "",
+        hasShelter: property.hasShelter || false,
+        ownerId: property.ownerId,
+        availableFrom: property.availableFrom,
+        availableTo: property.availableTo,
+        description: "",
+        propertyType: property.propertyType,
+      };
+      addFavorite(swipeCardData);
     }
   };
 

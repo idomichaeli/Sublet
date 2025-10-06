@@ -10,9 +10,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { colors, spacing, textStyles } from "../../../shared/constants/tokens";
 import FavoritesScreen from "./SavedPropertiesScreen";
 // import ChatScreen from "./ChatScreen";
-import { useFavoritesTab } from "../../../shared/hooks/state/FavoritesTabContext";
+import { useFavoritesTab } from "../../../core/services/FavoritesTabContext";
 
-type TabOption = "favorites" | "chat";
+type TabOption = "favorites" | "chats";
 
 export default function FavoritesTabScreen({ navigation }: any) {
   const { activeTab, setActiveTab } = useFavoritesTab();
@@ -44,7 +44,7 @@ export default function FavoritesTabScreen({ navigation }: any) {
     switch (activeTab) {
       case "favorites":
         return <FavoritesScreen navigation={navigation} />;
-      case "chat":
+      case "chats":
         return <FavoritesScreen navigation={navigation} />; // Placeholder for chat
       default:
         return <FavoritesScreen navigation={navigation} />;
@@ -55,7 +55,7 @@ export default function FavoritesTabScreen({ navigation }: any) {
     <SafeAreaView style={styles.container}>
       <View style={styles.tabContainer}>
         {renderTabButton("favorites", "Favorites", "heart-outline")}
-        {renderTabButton("chat", "Chats", "chatbubble-outline")}
+        {renderTabButton("chats", "Chats", "chatbubble-outline")}
       </View>
       <View style={styles.contentContainer}>{renderContent()}</View>
     </SafeAreaView>

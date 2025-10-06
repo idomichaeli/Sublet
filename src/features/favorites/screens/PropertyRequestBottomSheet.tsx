@@ -27,6 +27,12 @@ interface MakeRequestBottomSheetProps {
   visible: boolean;
   onClose: () => void;
   listing: SwipeCardData;
+  onSubmit?: (requestData: {
+    message: string;
+    selectedPrice: number;
+    startDate: string;
+    endDate: string;
+  }) => void;
   onRequestCreated?: () => void; // Callback when request is successfully created
 }
 
@@ -34,6 +40,7 @@ export default function MakeRequestBottomSheet({
   visible,
   onClose,
   listing,
+  onSubmit,
   onRequestCreated,
 }: MakeRequestBottomSheetProps) {
   const { user } = useAuthStore();
@@ -111,6 +118,16 @@ export default function MakeRequestBottomSheet({
       };
 
       const newRequest = await add(requestData);
+
+      // Call onSubmit if provided
+      if (onSubmit) {
+        onSubmit({
+          message: message || "",
+          selectedPrice: selectedPrice,
+          startDate: startDate,
+          endDate: endDate,
+        });
+      }
 
       // Close bottom sheet and show animated success modal
       onClose();

@@ -4,7 +4,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import AuthStack from "./AuthStack";
 import OwnerStack from "./OwnerStack";
 import RenterNavigationStack from "../../../app/components/RenterNavigationStack";
-import { useAuthStore } from "../../hooks/state/authStore";
+import { useAuthStore } from "../../../core/services/authenticationStore";
 import { UserRole } from "../../types/user";
 
 export type RootStackParamList = {

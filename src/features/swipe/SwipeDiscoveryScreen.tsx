@@ -1,87 +1,233 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { View, StyleSheet, StatusBar } from "react-native";
+
+// Core imports
+import { colors } from "../../shared/constants/tokens";
 import { SwipeCardData } from "./components/SwipeCard";
+
+// Service imports
+import { useFavoritesStore } from "../../core/services/savedPropertiesStore";
+import { useFilterStore } from "../../core/services/propertyFilterStore";
+import { propertyFilterService } from "../../core/services/propertyFilterService";
+
+// Component imports
 import SwipeStack from "./components/SwipeStack";
 import SwipeEmptyState from "./components/PropertySwipeEmptyState";
 import HomeHeader from "./components/HomeHeader";
-import { colors } from "../../shared/constants/tokens";
-import { useFavoritesStore } from "../../core/services/savedPropertiesStore";
-import { useFilterStore } from "../../shared/hooks/state/filterStore";
 
+// Types
 interface SwipeDiscoveryScreenProps {
   navigation?: any;
   onFilterPress?: () => void;
   onViewModeChange?: (mode: "list" | "swipe") => void;
 }
 
+/**
+ * Swipe discovery screen that handles property swiping with comprehensive filtering
+ * and empty state management
+ */
 export default function SwipeDiscoveryScreen({
   navigation,
   onFilterPress,
   onViewModeChange,
 }: SwipeDiscoveryScreenProps) {
-  const [isEmpty, setIsEmpty] = useState(false);
+  // Local state
+  const [isEmpty, setIsEmpty] = useState<boolean>(false);
+  const [isLoadingProperties, setIsLoadingProperties] =
+    useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
+  // Store hooks
   const { addFavorite, isFavorite } = useFavoritesStore();
-  const { appliedFilters, isLoading, properties } = useFilterStore();
+  const {
+    appliedFilters,
+    isLoading,
+    properties,
+    filteredProperties,
+    setFilteredProperties,
+    hasNoMatchingProperties,
+    setHasNoMatchingProperties,
+  } = useFilterStore();
 
-  // Update empty state when properties change
+  /**
+   * Applies filters when appliedFilters change
+   */
+  const applyFilters = useCallback(async () => {
+    if (Object.keys(appliedFilters).length === 0) {
+      // No filters applied, use all properties
+      setFilteredProperties(properties);
+      setHasNoMatchingProperties(false);
+      return;
+    }
+
+    try {
+      setIsLoadingProperties(true);
+      setError(null);
+
+      const filterResult = await propertyFilterService.applyFilters({
+        query: "",
+        filters: appliedFilters,
+        excludeFavorites: false, // We handle favorites filtering separately
+      });
+
+      setFilteredProperties(filterResult.properties);
+      setHasNoMatchingProperties(filterResult.filteredCount === 0);
+
+      console.log(
+        `Applied filters: ${filterResult.filteredCount} properties found`
+      );
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to apply filters";
+      setError(errorMessage);
+      console.error("Error applying filters:", err);
+
+      // Fallback: show all properties on error
+      setFilteredProperties(properties);
+      setHasNoMatchingProperties(false);
+    } finally {
+      setIsLoadingProperties(false);
+    }
+  }, [
+    appliedFilters,
+    properties,
+    setFilteredProperties,
+    setHasNoMatchingProperties,
+  ]);
+
+  // Apply filters when appliedFilters change
   useEffect(() => {
-    const availableProperties = properties.filter(
+    applyFilters();
+  }, [applyFilters]);
+
+  /**
+   * Updates empty state when filtered properties change
+   */
+  const updateEmptyState = useCallback(() => {
+    const availableProperties = filteredProperties.filter(
       (apartment) => !isFavorite(apartment.id)
     );
-    setIsEmpty(!isLoading && availableProperties.length === 0);
-  }, [properties, isLoading, isFavorite]);
+    setIsEmpty(!isLoadingProperties && availableProperties.length === 0);
+  }, [filteredProperties, isLoadingProperties, isFavorite]);
 
-  // Filter out favorited apartments to get the swipe stack
-  const apartments = React.useMemo(() => {
-    if (isLoading) return []; // Don't filter while loading
-
-    return properties.filter((apartment) => !isFavorite(apartment.id));
-  }, [properties, isLoading, isFavorite]);
-
-  // Initialize data when properties are loaded
+  // Update empty state when dependencies change
   useEffect(() => {
-    if (properties.length > 0 && !isLoading) {
-      // Reset state when new data is loaded
+    updateEmptyState();
+  }, [updateEmptyState]);
 
-      // Clear previous swipe history when new filters are applied
-      const availableApartments = properties.filter(
-        (apartment) => !isFavorite(apartment.id)
-      );
+  /**
+   * Memoized apartments for swiping (excluding favorites)
+   */
+  const apartments = useMemo(() => {
+    if (isLoadingProperties) return []; // Don't filter while loading
 
-      if (availableApartments.length > 0) {
-        console.log(
-          "Loaded",
-          availableApartments.length,
-          "properties for swiping"
-        );
+    return filteredProperties.filter((apartment) => !isFavorite(apartment.id));
+  }, [filteredProperties, isLoadingProperties, isFavorite]);
+
+  /**
+   * Handles swipe actions (left, right, up)
+   */
+  const handleSwipe = useCallback(
+    (
+      apartment: SwipeCardData,
+      direction: "left" | "right",
+      callback?: () => void
+    ) => {
+      const action = direction === "left" ? "Passed" : "Liked";
+      console.log(`${action} apartment:`, apartment.title);
+
+      if (direction === "right") {
+        // Add to favorites
+        addFavorite(apartment);
+        console.log("Added to favorites:", apartment.title);
+      } else {
+        console.log("Passed:", apartment.title);
       }
+
+      if (callback) {
+        callback();
+      }
+    },
+    [addFavorite]
+  );
+
+  /**
+   * Handles swipe right (like)
+   */
+  const handleSwipeRight = useCallback(
+    (apartment: SwipeCardData) => {
+      handleSwipe(apartment, "right");
+    },
+    [handleSwipe]
+  );
+
+  /**
+   * Handles swipe left (pass)
+   */
+  const handleSwipeLeft = useCallback(
+    (apartment: SwipeCardData) => {
+      handleSwipe(apartment, "left");
+    },
+    [handleSwipe]
+  );
+
+  /**
+   * Handles swipe up (like)
+   */
+  const handleSwipeUp = useCallback(
+    (apartment: SwipeCardData) => {
+      handleSwipe(apartment, "right");
+    },
+    [handleSwipe]
+  );
+
+  /**
+   * Handles empty state when no more cards
+   */
+  const handleEmpty = useCallback(() => {
+    setIsEmpty(true);
+  }, []);
+
+  /**
+   * Handles reload action
+   */
+  const handleReload = useCallback(async () => {
+    try {
+      setIsLoadingProperties(true);
+      setError(null);
+      await applyFilters();
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to reload";
+      setError(errorMessage);
+      console.error("Error reloading:", err);
+    } finally {
+      setIsLoadingProperties(false);
     }
-  }, [properties, isLoading, isFavorite]);
+  }, [applyFilters]);
 
-  const handleSwipe = (
-    apartment: SwipeCardData,
-    direction: "left" | "right",
-    callback?: () => void
-  ) => {
-    console.log(
-      `${direction === "left" ? "Passed" : "Liked"} apartment:`,
-      apartment.title
-    );
+  /**
+   * Memoized active filters count
+   */
+  const activeFiltersCount = useMemo(() => {
+    return Object.keys(appliedFilters).length;
+  }, [appliedFilters]);
 
-    if (direction === "right") {
-      // Add to favorites
-      addFavorite(apartment);
-      console.log("Added to favorites:", apartment.title);
-    } else {
-      console.log("Passed:", apartment.title);
-    }
+  /**
+   * Memoized has active filters flag
+   */
+  const hasActiveFilters = useMemo(() => {
+    return activeFiltersCount > 0;
+  }, [activeFiltersCount]);
 
-    if (callback) {
-      callback();
-    }
-  };
+  /**
+   * Memoized loading state
+   */
+  const isCurrentlyLoading = useMemo(() => {
+    return isLoading || isLoadingProperties;
+  }, [isLoading, isLoadingProperties]);
 
+  // Render empty state
   if (isEmpty) {
     return (
       <View style={styles.container}>
@@ -90,37 +236,42 @@ export default function SwipeDiscoveryScreen({
           viewMode="swipe"
           onViewModeChange={onViewModeChange || (() => {})}
           onFilterPress={onFilterPress}
-          hasActiveFilters={Object.keys(appliedFilters).length > 0}
+          hasActiveFilters={hasActiveFilters}
         />
         <SwipeEmptyState
-          onReload={() => {}}
+          onReload={handleReload}
           onChangeFilters={onFilterPress || (() => {})}
         />
       </View>
     );
   }
 
+  // Render main swipe interface
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
+
+      {/* Header */}
       <HomeHeader
         viewMode="swipe"
         onViewModeChange={onViewModeChange || (() => {})}
         onFilterPress={onFilterPress}
-        hasActiveFilters={Object.keys(appliedFilters).length > 0}
+        hasActiveFilters={hasActiveFilters}
       />
 
-      {isLoading ? (
+      {/* Loading State */}
+      {isCurrentlyLoading ? (
         <View style={styles.loadingContainer}>
-          {/* Loading state - could add a spinner here */}
+          {/* TODO: Add loading spinner component */}
         </View>
       ) : (
+        /* Swipe Stack */
         <SwipeStack
           data={apartments}
-          onSwipeRight={(apartment) => handleSwipe(apartment, "right")}
-          onSwipeLeft={(apartment) => handleSwipe(apartment, "left")}
-          onSwipeUp={(apartment) => handleSwipe(apartment, "right")}
-          onEmpty={() => setIsEmpty(true)}
+          onSwipeRight={handleSwipeRight}
+          onSwipeLeft={handleSwipeLeft}
+          onSwipeUp={handleSwipeUp}
+          onEmpty={handleEmpty}
         />
       )}
     </View>

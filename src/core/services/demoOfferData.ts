@@ -1,4 +1,4 @@
-import renterOfferService from './renterOfferService';
+import renterOfferService from './renterOfferSubmission';
 import offerService from './offerService';
 
 /**

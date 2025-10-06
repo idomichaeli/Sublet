@@ -26,9 +26,9 @@ import Button from "../../../shared/components/ui/Button";
 import EmptyState from "../../../shared/components/ui/EmptyState";
 import AreaStories from "../../../shared/components/ui/PropertyAreaStories";
 import RequestButton from "../../favorites/components/RequestButton";
-import MakeRequestBottomSheet from "../../favorites/MakeRequestBottomSheet";
+import MakeRequestBottomSheet from "../../favorites/screens/PropertyRequestBottomSheet";
 import { TelAvivLocation } from "../../../shared/constants/locations";
-import { useRequestStore } from "../../../shared/hooks/state/requestStore";
+import { useRequestStore } from "../../../core/services/rentalRequestStore";
 
 const { width } = Dimensions.get("window");
 

@@ -8,8 +8,8 @@ import {
   FavoritesTabScreen,
   MyBookingsScreen,
 } from "../../features/swipe";
-import { ProfileScreen } from "../../features/profile";
-import { useFavoritesTab } from "../../shared/hooks/state/FavoritesTabContext";
+import { RenterProfileScreen } from "../../features/profile";
+import { useFavoritesTab } from "../../core/services/FavoritesTabContext";
 
 export type BottomTabParamList = {
   Home: undefined;
@@ -33,7 +33,7 @@ export default function BottomTabNavigator() {
             iconName = focused ? "home" : "home-outline";
           } else if (route.name === "Favorites") {
             // Show different icons based on the active sub-tab
-            if (activeTab === "chat") {
+            if (activeTab === "chats") {
               iconName = focused ? "chatbubble" : "chatbubble-outline";
             } else {
               iconName = focused ? "heart" : "heart-outline";
@@ -104,7 +104,7 @@ export default function BottomTabNavigator() {
       />
       <Tab.Screen
         name="Profile"
-        component={ProfileScreen}
+        component={RenterProfileScreen}
         options={{ headerShown: false }}
       />
     </Tab.Navigator>

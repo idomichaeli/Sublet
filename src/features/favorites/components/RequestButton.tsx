@@ -6,7 +6,7 @@ import {
   textStyles,
   borderRadius,
 } from "../../../shared/constants/tokens";
-import { useRequestStore } from "../../../shared/hooks/state/requestStore";
+import { useRequestStore } from "../../../core/services/rentalRequestStore";
 
 interface RequestButtonProps {
   onPress: () => void;

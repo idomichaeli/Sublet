@@ -7,4 +7,4 @@ export { default as FavoritesTabScreen } from './SavedPropertiesTabScreen';
 export { default as HomeScreen } from './PropertyDiscoveryHomeScreen';
 export { default as ListingDetailsScreen } from './PropertyDetailsScreen';
 export { default as MyBookingsScreen } from './MyPropertyBookingsScreen';
-export { default as SwipeDiscoveryScreen } from '../HomeScreen';
+export { default as SwipeDiscoveryScreen } from '../SwipeDiscoveryScreen';

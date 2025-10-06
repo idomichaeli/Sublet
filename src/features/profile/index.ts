@@ -1,6 +1,5 @@
 // Profile feature exports
 export * from './screens';
-export * from './components';
-export * from './services';
-export * from './types';
-export * from './utils';
+
+// Re-export specific screens for easier imports
+export { OwnerProfileScreen, RenterProfileScreen } from './screens';

@@ -8,9 +8,11 @@ type RequestState = {
   fetch: () => Promise<void>;
   fetchByListing: (listingId: string) => Promise<RentalRequest | null>;
   add: (requestData: CreateRentalRequestData) => Promise<RentalRequest>;
+  addRequest: (requestData: CreateRentalRequestData) => Promise<RentalRequest>;
   update: (request: RentalRequest) => Promise<void>;
   remove: (requestId: string) => Promise<void>;
   getRequestByListing: (listingId: string) => RentalRequest | null;
+  getRequestsByProperty: (propertyId: string) => RentalRequest[];
   refreshRequest: (listingId: string) => Promise<void>;
 };
 
@@ -56,6 +58,10 @@ export const useRequestStore = create<RequestState>((set, get) => ({
     }
   },
   
+  addRequest: async (requestData: CreateRentalRequestData) => {
+    return get().add(requestData);
+  },
+  
   update: async (request: RentalRequest) => {
     try {
       const updated = await api.updateRequest(request);
@@ -84,6 +90,10 @@ export const useRequestStore = create<RequestState>((set, get) => ({
   
   getRequestByListing: (listingId: string) => {
     return get().requests.find(r => r.propertyId === listingId) || null;
+  },
+  
+  getRequestsByProperty: (propertyId: string) => {
+    return get().requests.filter(r => r.propertyId === propertyId);
   },
   
   refreshRequest: async (listingId: string) => {

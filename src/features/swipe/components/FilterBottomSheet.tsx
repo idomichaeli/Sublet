@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,8 @@ import {
   Animated,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+// Core imports
 import {
   colors,
   spacing,
@@ -17,12 +19,17 @@ import {
   borderRadius,
   shadows,
 } from "../../../shared/constants/tokens";
+
+// Component imports
 import Button from "../../../shared/components/ui/Button";
 import Chip from "../../../shared/components/ui/Chip";
 import Toggle from "../../../shared/components/ui/Toggle";
 import DualRangeSlider from "../../../shared/components/ui/DualRangeSlider";
-import Input from "../../../shared/components/ui/Input";
+
+// Type imports
 import { FilterData, FilterStepProps } from "../types/FilterData";
+
+// Data imports
 import {
   REQUIRED_AMENITIES,
   ADDITIONAL_AMENITIES,
@@ -32,11 +39,12 @@ import {
   BEDROOM_COUNTS,
   BATHROOM_COUNTS,
   RENOVATION_STATUSES,
-  getRenovationLabel,
 } from "../../../core/types/propertyObjects/PropertyBasicDetailsObject";
 
+// Constants
 const { height: screenHeight } = Dimensions.get("window");
 
+// Types
 interface FilterBottomSheetProps {
   visible: boolean;
   onClose: () => void;
@@ -44,13 +52,37 @@ interface FilterBottomSheetProps {
   initialFilters?: FilterData;
 }
 
-const TABS = [
+interface TabConfig {
+  id: string;
+  label: string;
+  icon: string;
+}
+
+interface RangeState {
+  min: number;
+  max: number;
+}
+
+interface SummaryReviewModalProps {
+  visible: boolean;
+  filterData: FilterData;
+  onClose: () => void;
+  onConfirmApply: () => void;
+}
+
+// Constants
+const TABS: TabConfig[] = [
   { id: "basic", label: "Basic Details", icon: "🏠" },
   { id: "amenities", label: "Amenities", icon: "✨" },
   { id: "price", label: "Price & Location", icon: "💰" },
 ];
 
-// Helper function to check if a tab has data
+const DEFAULT_SIZE_RANGE: RangeState = { min: 30, max: 500 };
+const DEFAULT_PRICE_RANGE: RangeState = { min: 1000, max: 5000 };
+
+/**
+ * Helper function to check if a tab has active filter data
+ */
 const getTabHasData = (tabId: string, filterData: FilterData): boolean => {
   switch (tabId) {
     case "basic":
@@ -76,54 +108,204 @@ const getTabHasData = (tabId: string, filterData: FilterData): boolean => {
   }
 };
 
-// Basic Details Step Component
+/**
+ * Basic Details Step Component
+ * Handles bedrooms, bathrooms, living room, size, renovation, and additional rooms
+ */
 function BasicDetailsStep({ data, onUpdate }: FilterStepProps) {
-  const [sizeRange, setSizeRange] = useState({
-    min: data.minSize || 30,
-    max: data.maxSize || 500,
+  const [sizeRange, setSizeRange] = useState<RangeState>({
+    min: data.minSize || DEFAULT_SIZE_RANGE.min,
+    max: data.maxSize || DEFAULT_SIZE_RANGE.max,
   });
 
+  // Update size range when data changes
   useEffect(() => {
     setSizeRange({
-      min: data.minSize || 30,
-      max: data.maxSize || 500,
+      min: data.minSize || DEFAULT_SIZE_RANGE.min,
+      max: data.maxSize || DEFAULT_SIZE_RANGE.max,
     });
   }, [data.minSize, data.maxSize]);
 
-  const handleSizeRangeChange = (min: number, max: number) => {
-    setSizeRange({ min, max });
-    onUpdate({
-      minSize: min !== 30 ? min : undefined,
-      maxSize: max !== 500 ? max : undefined,
-    });
-  };
-
-  const handleRoomToggle = (room: string, isSelected: boolean) => {
-    const currentRooms = data.additionalRooms || [];
-    if (isSelected) {
-      if (!currentRooms.includes(room)) {
-        onUpdate({ additionalRooms: [...currentRooms, room] });
-      }
-    } else {
-      onUpdate({ additionalRooms: currentRooms.filter((r) => r !== room) });
-    }
-  };
-
-  const handleBedroomToggle = (bedroomCount: number) => {
-    const currentBedrooms = data.bedrooms || [];
-    if (currentBedrooms.includes(bedroomCount)) {
-      // Remove from selection
-      const newSelection = currentBedrooms.filter(
-        (count) => count !== bedroomCount
-      );
+  /**
+   * Handles size range changes
+   */
+  const handleSizeRangeChange = useCallback(
+    (min: number, max: number) => {
+      setSizeRange({ min, max });
       onUpdate({
-        bedrooms: newSelection.length > 0 ? newSelection : undefined,
+        minSize: min !== DEFAULT_SIZE_RANGE.min ? min : undefined,
+        maxSize: max !== DEFAULT_SIZE_RANGE.max ? max : undefined,
       });
-    } else {
-      // Add to selection
-      onUpdate({ bedrooms: [...currentBedrooms, bedroomCount] });
-    }
-  };
+    },
+    [onUpdate]
+  );
+
+  /**
+   * Handles additional room toggle
+   */
+  const handleRoomToggle = useCallback(
+    (room: string, isSelected: boolean) => {
+      const currentRooms = data.additionalRooms || [];
+      if (isSelected) {
+        if (!currentRooms.includes(room)) {
+          onUpdate({ additionalRooms: [...currentRooms, room] });
+        }
+      } else {
+        onUpdate({ additionalRooms: currentRooms.filter((r) => r !== room) });
+      }
+    },
+    [data.additionalRooms, onUpdate]
+  );
+
+  /**
+   * Handles bedroom count toggle
+   */
+  const handleBedroomToggle = useCallback(
+    (bedroomCount: number) => {
+      const currentBedrooms = data.bedrooms || [];
+      if (currentBedrooms.includes(bedroomCount)) {
+        // Remove from selection
+        const newSelection = currentBedrooms.filter(
+          (count) => count !== bedroomCount
+        );
+        onUpdate({
+          bedrooms: newSelection.length > 0 ? newSelection : undefined,
+        });
+      } else {
+        // Add to selection
+        onUpdate({ bedrooms: [...currentBedrooms, bedroomCount] });
+      }
+    },
+    [data.bedrooms, onUpdate]
+  );
+
+  /**
+   * Renders bedroom selection chips
+   */
+  const renderBedroomChips = useCallback(
+    () => (
+      <View style={styles.chipContainer}>
+        <Chip
+          label="Any"
+          selected={!data.bedrooms || data.bedrooms.length === 0}
+          onPress={() => onUpdate({ bedrooms: undefined })}
+          variant="primary"
+        />
+        {BEDROOM_COUNTS.map((count) => (
+          <Chip
+            key={count}
+            label={count === 6 ? "6+" : count.toString()}
+            selected={data.bedrooms?.includes(count) || false}
+            onPress={() => handleBedroomToggle(count)}
+            variant="primary"
+          />
+        ))}
+      </View>
+    ),
+    [data.bedrooms, handleBedroomToggle, onUpdate]
+  );
+
+  /**
+   * Renders living room selection chips
+   */
+  const renderLivingRoomChips = useCallback(
+    () => (
+      <View style={styles.chipContainer}>
+        <Chip
+          label="Any"
+          selected={data.hasLivingRoom === undefined}
+          onPress={() => onUpdate({ hasLivingRoom: undefined })}
+          variant="primary"
+        />
+        <Chip
+          label="Required"
+          selected={data.hasLivingRoom === true}
+          onPress={() => onUpdate({ hasLivingRoom: true })}
+          variant="primary"
+        />
+        <Chip
+          label="Not Required"
+          selected={data.hasLivingRoom === false}
+          onPress={() => onUpdate({ hasLivingRoom: false })}
+          variant="primary"
+        />
+      </View>
+    ),
+    [data.hasLivingRoom, onUpdate]
+  );
+
+  /**
+   * Renders bathroom selection chips
+   */
+  const renderBathroomChips = useCallback(
+    () => (
+      <View style={styles.chipContainer}>
+        <Chip
+          label="Any"
+          selected={!data.bathrooms}
+          onPress={() => onUpdate({ bathrooms: undefined })}
+          variant="primary"
+        />
+        {BATHROOM_COUNTS.map((count) => (
+          <Chip
+            key={count}
+            label={count === 3 ? "3+" : count.toString()}
+            selected={data.bathrooms === count}
+            onPress={() => onUpdate({ bathrooms: count })}
+            variant="primary"
+          />
+        ))}
+      </View>
+    ),
+    [data.bathrooms, onUpdate]
+  );
+
+  /**
+   * Renders renovation status chips
+   */
+  const renderRenovationChips = useCallback(
+    () => (
+      <View style={styles.chipContainer}>
+        <Chip
+          label="Any"
+          selected={!data.renovation || data.renovation === "any"}
+          onPress={() => onUpdate({ renovation: "any" })}
+          variant="primary"
+        />
+        {RENOVATION_STATUSES.map((status) => (
+          <Chip
+            key={status.id}
+            label={status.label}
+            selected={data.renovation === status.id}
+            onPress={() => onUpdate({ renovation: status.id })}
+            variant="primary"
+          />
+        ))}
+      </View>
+    ),
+    [data.renovation, onUpdate]
+  );
+
+  /**
+   * Renders additional rooms toggles
+   */
+  const renderAdditionalRooms = useCallback(
+    () => (
+      <View style={styles.roomOptionsContainer}>
+        {ALL_ROOMS.map((room) => (
+          <View key={room} style={styles.roomOption}>
+            <Toggle
+              value={data.additionalRooms?.includes(room) || false}
+              onValueChange={(isSelected) => handleRoomToggle(room, isSelected)}
+              size="sm"
+            />
+            <Text style={styles.roomOptionLabel}>{room}</Text>
+          </View>
+        ))}
+      </View>
+    ),
+    [data.additionalRooms, handleRoomToggle]
+  );
 
   return (
     <View style={styles.stepContainer}>
@@ -133,70 +315,19 @@ function BasicDetailsStep({ data, onUpdate }: FilterStepProps) {
       {/* Bedrooms */}
       <View style={styles.inputGroup}>
         <Text style={styles.inputLabel}>Bedrooms</Text>
-        <View style={styles.chipContainer}>
-          <Chip
-            label="Any"
-            selected={!data.bedrooms || data.bedrooms.length === 0}
-            onPress={() => onUpdate({ bedrooms: undefined })}
-            variant="primary"
-          />
-          {BEDROOM_COUNTS.map((count) => (
-            <Chip
-              key={count}
-              label={count === 6 ? "6+" : count.toString()}
-              selected={data.bedrooms?.includes(count) || false}
-              onPress={() => handleBedroomToggle(count)}
-              variant="primary"
-            />
-          ))}
-        </View>
+        {renderBedroomChips()}
       </View>
 
       {/* Living Room */}
       <View style={styles.inputGroup}>
         <Text style={styles.inputLabel}>Living Room</Text>
-        <View style={styles.chipContainer}>
-          <Chip
-            label="Any"
-            selected={data.hasLivingRoom === undefined}
-            onPress={() => onUpdate({ hasLivingRoom: undefined })}
-            variant="primary"
-          />
-          <Chip
-            label="Required"
-            selected={data.hasLivingRoom === true}
-            onPress={() => onUpdate({ hasLivingRoom: true })}
-            variant="primary"
-          />
-          <Chip
-            label="Not Required"
-            selected={data.hasLivingRoom === false}
-            onPress={() => onUpdate({ hasLivingRoom: false })}
-            variant="primary"
-          />
-        </View>
+        {renderLivingRoomChips()}
       </View>
 
       {/* Bathrooms */}
       <View style={styles.inputGroup}>
         <Text style={styles.inputLabel}>Bathrooms</Text>
-        <View style={styles.chipContainer}>
-          <Chip
-            label="Any"
-            selected={!data.bathrooms}
-            onPress={() => onUpdate({ bathrooms: undefined })}
-            variant="primary"
-          />
-          {BATHROOM_COUNTS.map((count) => (
-            <Chip
-              key={count}
-              label={count === 3 ? "3+" : count.toString()}
-              selected={data.bathrooms === count}
-              onPress={() => onUpdate({ bathrooms: count })}
-              variant="primary"
-            />
-          ))}
-        </View>
+        {renderBathroomChips()}
       </View>
 
       {/* Size Range */}
@@ -206,8 +337,8 @@ function BasicDetailsStep({ data, onUpdate }: FilterStepProps) {
           minValue={sizeRange.min}
           maxValue={sizeRange.max}
           onRangeChange={handleSizeRangeChange}
-          minimumRange={30}
-          maximumRange={500}
+          minimumRange={DEFAULT_SIZE_RANGE.min}
+          maximumRange={DEFAULT_SIZE_RANGE.max}
           step={10}
           unit="m²"
         />
@@ -216,81 +347,78 @@ function BasicDetailsStep({ data, onUpdate }: FilterStepProps) {
       {/* Renovation Status */}
       <View style={styles.inputGroup}>
         <Text style={styles.inputLabel}>Renovation Status</Text>
-        <View style={styles.chipContainer}>
-          <Chip
-            label="Any"
-            selected={!data.renovation || data.renovation === "any"}
-            onPress={() => onUpdate({ renovation: "any" })}
-            variant="primary"
-          />
-          {RENOVATION_STATUSES.map((status) => (
-            <Chip
-              key={status.id}
-              label={status.label}
-              selected={data.renovation === status.id}
-              onPress={() => onUpdate({ renovation: status.id })}
-              variant="primary"
-            />
-          ))}
-        </View>
+        {renderRenovationChips()}
       </View>
 
       {/* Additional Rooms */}
       <View style={styles.inputGroup}>
         <Text style={styles.inputLabel}>Additional Rooms</Text>
         <Text style={styles.inputSubtext}>Select rooms you'd like to have</Text>
-        <View style={styles.roomOptionsContainer}>
-          {ALL_ROOMS.map((room) => (
-            <View key={room} style={styles.roomOption}>
-              <Toggle
-                value={data.additionalRooms?.includes(room) || false}
-                onValueChange={(isSelected) =>
-                  handleRoomToggle(room, isSelected)
-                }
-                size="sm"
-              />
-              <Text style={styles.roomOptionLabel}>{room}</Text>
-            </View>
-          ))}
-        </View>
+        {renderAdditionalRooms()}
       </View>
     </View>
   );
 }
 
-// Amenities Step Component
+/**
+ * Amenities Step Component
+ * Handles essential and additional amenities selection
+ */
 function AmenitiesStep({ data, onUpdate }: FilterStepProps) {
-  const handleAmenityToggle = (amenityId: string) => {
-    const newAmenities = data.amenities?.includes(amenityId)
-      ? data.amenities.filter((id) => id !== amenityId)
-      : [...(data.amenities || []), amenityId];
-    onUpdate({ amenities: newAmenities });
-  };
-
-  const renderAmenitiesSection = (
-    amenities: any[],
-    title: string,
-    isRequired: boolean
-  ) => (
-    <View style={styles.section}>
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>{title}</Text>
-        {isRequired && <Text style={styles.requiredBadge}>Required</Text>}
-      </View>
-      <View style={styles.amenitiesGrid}>
-        {amenities.map((amenity) => (
-          <Chip
-            key={amenity.id}
-            label={`${amenity.icon} ${amenity.label}`}
-            selected={data.amenities?.includes(amenity.id) || false}
-            onPress={() => handleAmenityToggle(amenity.id)}
-            variant="primary"
-            style={styles.amenityChip}
-          />
-        ))}
-      </View>
-    </View>
+  /**
+   * Handles amenity toggle
+   */
+  const handleAmenityToggle = useCallback(
+    (amenityId: string) => {
+      const newAmenities = data.amenities?.includes(amenityId)
+        ? data.amenities.filter((id) => id !== amenityId)
+        : [...(data.amenities || []), amenityId];
+      onUpdate({ amenities: newAmenities });
+    },
+    [data.amenities, onUpdate]
   );
+
+  /**
+   * Renders amenities section
+   */
+  const renderAmenitiesSection = useCallback(
+    (amenities: any[], title: string, isRequired: boolean) => (
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>{title}</Text>
+          {isRequired && <Text style={styles.requiredBadge}>Required</Text>}
+        </View>
+        <View style={styles.amenitiesGrid}>
+          {amenities.map((amenity) => (
+            <Chip
+              key={amenity.id}
+              label={`${amenity.icon} ${amenity.label}`}
+              selected={data.amenities?.includes(amenity.id) || false}
+              onPress={() => handleAmenityToggle(amenity.id)}
+              variant="primary"
+              style={styles.amenityChip}
+            />
+          ))}
+        </View>
+      </View>
+    ),
+    [data.amenities, handleAmenityToggle]
+  );
+
+  /**
+   * Renders selected amenities summary
+   */
+  const renderSelectedSummary = useCallback(() => {
+    if (!data.amenities || data.amenities.length === 0) return null;
+
+    return (
+      <View style={styles.selectedContainer}>
+        <Text style={styles.selectedLabel}>
+          Selected: {data.amenities.length} amenities
+        </Text>
+      </View>
+    );
+  }, [data.amenities]);
 
   return (
     <View style={styles.stepContainer}>
@@ -306,38 +434,77 @@ function AmenitiesStep({ data, onUpdate }: FilterStepProps) {
         false
       )}
 
-      {data.amenities && data.amenities.length > 0 && (
-        <View style={styles.selectedContainer}>
-          <Text style={styles.selectedLabel}>
-            Selected: {data.amenities.length} amenities
-          </Text>
-        </View>
-      )}
+      {renderSelectedSummary()}
     </View>
   );
 }
 
-// Price & Location Step Component
+/**
+ * Price & Location Step Component
+ * Handles price range and property type selection
+ */
 function PriceLocationStep({ data, onUpdate }: FilterStepProps) {
-  const [priceRange, setPriceRange] = useState({
-    min: data.minPrice || 1000,
-    max: data.maxPrice || 5000,
+  const [priceRange, setPriceRange] = useState<RangeState>({
+    min: data.minPrice || DEFAULT_PRICE_RANGE.min,
+    max: data.maxPrice || DEFAULT_PRICE_RANGE.max,
   });
 
+  // Update price range when data changes
   useEffect(() => {
     setPriceRange({
-      min: data.minPrice || 1000,
-      max: data.maxPrice || 5000,
+      min: data.minPrice || DEFAULT_PRICE_RANGE.min,
+      max: data.maxPrice || DEFAULT_PRICE_RANGE.max,
     });
   }, [data.minPrice, data.maxPrice]);
 
-  const handlePriceRangeChange = (min: number, max: number) => {
-    setPriceRange({ min, max });
-    onUpdate({
-      minPrice: min !== 1000 ? min : undefined,
-      maxPrice: max !== 5000 ? max : undefined,
-    });
-  };
+  /**
+   * Handles price range changes
+   */
+  const handlePriceRangeChange = useCallback(
+    (min: number, max: number) => {
+      setPriceRange({ min, max });
+      onUpdate({
+        minPrice: min !== DEFAULT_PRICE_RANGE.min ? min : undefined,
+        maxPrice: max !== DEFAULT_PRICE_RANGE.max ? max : undefined,
+      });
+    },
+    [onUpdate]
+  );
+
+  /**
+   * Renders property type chips
+   */
+  const renderPropertyTypeChips = useCallback(
+    () => (
+      <View style={styles.chipContainer}>
+        <Chip
+          label="Any"
+          selected={!data.propertyType || data.propertyType === "any"}
+          onPress={() => onUpdate({ propertyType: "any" })}
+          variant="primary"
+        />
+        <Chip
+          label="Entire Place"
+          selected={data.propertyType === "entire_place"}
+          onPress={() => onUpdate({ propertyType: "entire_place" })}
+          variant="primary"
+        />
+        <Chip
+          label="Room"
+          selected={data.propertyType === "room"}
+          onPress={() => onUpdate({ propertyType: "room" })}
+          variant="primary"
+        />
+        <Chip
+          label="Shared Room"
+          selected={data.propertyType === "shared_room"}
+          onPress={() => onUpdate({ propertyType: "shared_room" })}
+          variant="primary"
+        />
+      </View>
+    ),
+    [data.propertyType, onUpdate]
+  );
 
   return (
     <View style={styles.stepContainer}>
@@ -363,35 +530,10 @@ function PriceLocationStep({ data, onUpdate }: FilterStepProps) {
       {/* Property Type */}
       <View style={styles.inputGroup}>
         <Text style={styles.inputLabel}>Property Type</Text>
-        <View style={styles.chipContainer}>
-          <Chip
-            label="Any"
-            selected={!data.propertyType || data.propertyType === "any"}
-            onPress={() => onUpdate({ propertyType: "any" })}
-            variant="primary"
-          />
-          <Chip
-            label="Entire Place"
-            selected={data.propertyType === "entire_place"}
-            onPress={() => onUpdate({ propertyType: "entire_place" })}
-            variant="primary"
-          />
-          <Chip
-            label="Room"
-            selected={data.propertyType === "room"}
-            onPress={() => onUpdate({ propertyType: "room" })}
-            variant="primary"
-          />
-          <Chip
-            label="Shared Room"
-            selected={data.propertyType === "shared_room"}
-            onPress={() => onUpdate({ propertyType: "shared_room" })}
-            variant="primary"
-          />
-        </View>
+        {renderPropertyTypeChips()}
       </View>
 
-      {/* Note about location - could be expanded later */}
+      {/* Location Note */}
       <View style={styles.inputGroup}>
         <Text style={styles.inputLabel}>Preferred Areas</Text>
         <Text style={styles.inputSubtext}>
@@ -402,19 +544,20 @@ function PriceLocationStep({ data, onUpdate }: FilterStepProps) {
   );
 }
 
-// Summary Review Modal Component
+/**
+ * Summary Review Modal Component
+ * Shows a summary of applied filters before confirmation
+ */
 function SummaryReviewModal({
   visible,
   filterData,
   onClose,
   onConfirmApply,
-}: {
-  visible: boolean;
-  filterData: FilterData;
-  onClose: () => void;
-  onConfirmApply: () => void;
-}) {
-  const getSelectedCount = () => {
+}: SummaryReviewModalProps) {
+  /**
+   * Counts the number of active filters
+   */
+  const getSelectedCount = useCallback(() => {
     let count = 0;
     if (filterData.propertyType && filterData.propertyType !== "any") count++;
     if (filterData.bedrooms && filterData.bedrooms.length > 0) count++;
@@ -427,9 +570,12 @@ function SummaryReviewModal({
     if (filterData.amenities && filterData.amenities.length > 0) count++;
     if (filterData.minPrice || filterData.maxPrice) count++;
     return count;
-  };
+  }, [filterData]);
 
-  const renderFilterItems = () => {
+  /**
+   * Renders filter items for the summary
+   */
+  const renderFilterItems = useCallback(() => {
     const items = [];
 
     if (filterData.propertyType && filterData.propertyType !== "any") {
@@ -549,9 +695,26 @@ function SummaryReviewModal({
     }
 
     return items;
-  };
+  }, [filterData]);
 
-  const items = renderFilterItems() || [];
+  /**
+   * Renders empty state when no filters are applied
+   */
+  const renderEmptyState = useCallback(
+    () => (
+      <View style={styles.summaryEmptyState}>
+        <Text style={styles.summaryEmptyIcon}>🔍</Text>
+        <Text style={styles.summaryEmptyTitle}>No Filters Applied</Text>
+        <Text style={styles.summaryEmptyText}>
+          All available properties will be shown
+        </Text>
+      </View>
+    ),
+    []
+  );
+
+  const selectedCount = getSelectedCount();
+  const filterItems = renderFilterItems();
 
   return (
     <Modal visible={!!visible} animationType="fade" transparent>
@@ -568,8 +731,7 @@ function SummaryReviewModal({
           {/* Summary Info */}
           <View style={styles.summaryHeader}>
             <Text style={styles.summaryCount}>
-              {getSelectedCount()} filter{getSelectedCount() !== 1 ? "s" : ""}{" "}
-              applied
+              {selectedCount} filter{selectedCount !== 1 ? "s" : ""} applied
             </Text>
             <Text style={styles.summarySubtext}>
               Ready to search with your preferences
@@ -581,22 +743,16 @@ function SummaryReviewModal({
             style={styles.summaryScroll}
             showsVerticalScrollIndicator={false}
           >
-            {items.length > 0 ? (
+            {filterItems.length > 0 ? (
               <View style={styles.summaryFiltersList}>
-                {items.map((item, index) => (
+                {filterItems.map((item, index) => (
                   <View key={index} style={{ marginBottom: spacing.sm }}>
                     {item}
                   </View>
                 ))}
               </View>
             ) : (
-              <View style={styles.summaryEmptyState}>
-                <Text style={styles.summaryEmptyIcon}>🔍</Text>
-                <Text style={styles.summaryEmptyTitle}>No Filters Applied</Text>
-                <Text style={styles.summaryEmptyText}>
-                  All available properties will be shown
-                </Text>
-              </View>
+              renderEmptyState()
             )}
           </ScrollView>
 
@@ -622,53 +778,84 @@ function SummaryReviewModal({
   );
 }
 
+/**
+ * Main FilterBottomSheet Component
+ * Provides a comprehensive filtering interface with tabbed navigation
+ */
 export default function FilterBottomSheet({
   visible,
   onClose,
   onApply,
   initialFilters = {},
 }: FilterBottomSheetProps) {
-  const [activeTab, setActiveTab] = useState("basic");
+  // State
+  const [activeTab, setActiveTab] = useState<string>("basic");
   const [filterData, setFilterData] = useState<FilterData>(initialFilters);
-  const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
   const [tabAnimation] = useState(new Animated.Value(0));
 
-  const updateData = (updates: Partial<FilterData>) => {
+  // Update filter data when initial filters change
+  useEffect(() => {
+    setFilterData(initialFilters);
+  }, [initialFilters]);
+
+  /**
+   * Updates filter data with new values
+   */
+  const updateData = useCallback((updates: Partial<FilterData>) => {
     setFilterData((prev) => ({ ...prev, ...updates }));
-  };
+  }, []);
 
-  const handleApply = () => {
+  /**
+   * Handles apply button press - shows summary modal
+   */
+  const handleApply = useCallback(() => {
     setShowSummaryModal(true);
-  };
+  }, []);
 
-  const handleConfirmApply = () => {
+  /**
+   * Handles confirmation of filter application
+   */
+  const handleConfirmApply = useCallback(() => {
     onApply(filterData);
     onClose();
-  };
+  }, [filterData, onApply, onClose]);
 
-  const handleReset = () => {
+  /**
+   * Handles reset button press
+   */
+  const handleReset = useCallback(() => {
     setFilterData({});
     setActiveTab("basic");
-  };
+  }, []);
 
-  const handleTabChange = (tabId: string) => {
-    Animated.sequence([
-      Animated.timing(tabAnimation, {
-        toValue: 0.8,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(tabAnimation, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-    ]).start();
+  /**
+   * Handles tab change with animation
+   */
+  const handleTabChange = useCallback(
+    (tabId: string) => {
+      Animated.sequence([
+        Animated.timing(tabAnimation, {
+          toValue: 0.8,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+        Animated.timing(tabAnimation, {
+          toValue: 1,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+      ]).start();
 
-    setActiveTab(tabId);
-  };
+      setActiveTab(tabId);
+    },
+    [tabAnimation]
+  );
 
-  const renderTabContent = () => {
+  /**
+   * Renders tab content based on active tab
+   */
+  const renderTabContent = useCallback(() => {
     switch (activeTab) {
       case "basic":
         return <BasicDetailsStep data={filterData} onUpdate={updateData} />;
@@ -679,7 +866,55 @@ export default function FilterBottomSheet({
       default:
         return <BasicDetailsStep data={filterData} onUpdate={updateData} />;
     }
-  };
+  }, [activeTab, filterData, updateData]);
+
+  /**
+   * Renders tab navigation
+   */
+  const renderTabNavigation = useCallback(
+    () => (
+      <View style={styles.tabContainer}>
+        {TABS.map((tab) => {
+          const hasData = getTabHasData(tab.id, filterData);
+          return (
+            <TouchableOpacity
+              key={tab.id}
+              style={[
+                styles.tab,
+                activeTab === tab.id && styles.tabActive,
+                hasData && styles.tabHasData,
+              ]}
+              onPress={() => handleTabChange(tab.id)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.tabContent}>
+                <Text
+                  style={[
+                    styles.tabIcon,
+                    activeTab === tab.id && styles.tabIconActive,
+                    hasData && styles.tabIconHasData,
+                  ]}
+                >
+                  {tab.icon}
+                </Text>
+                <Text
+                  style={[
+                    styles.tabLabel,
+                    activeTab === tab.id && styles.tabLabelActive,
+                    hasData && styles.tabLabelHasData,
+                  ]}
+                >
+                  {tab.label}
+                </Text>
+                {hasData && <View style={styles.tabDataIndicator} />}
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    ),
+    [activeTab, filterData, handleTabChange]
+  );
 
   return (
     <Modal
@@ -701,45 +936,7 @@ export default function FilterBottomSheet({
         </View>
 
         {/* Tab Navigation */}
-        <View style={styles.tabContainer}>
-          {TABS.map((tab) => {
-            const hasData = getTabHasData(tab.id, filterData);
-            return (
-              <TouchableOpacity
-                key={tab.id}
-                style={[
-                  styles.tab,
-                  activeTab === tab.id && styles.tabActive,
-                  hasData && styles.tabHasData,
-                ]}
-                onPress={() => handleTabChange(tab.id)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.tabContent}>
-                  <Text
-                    style={[
-                      styles.tabIcon,
-                      activeTab === tab.id && styles.tabIconActive,
-                      hasData && styles.tabIconHasData,
-                    ]}
-                  >
-                    {tab.icon}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.tabLabel,
-                      activeTab === tab.id && styles.tabLabelActive,
-                      hasData && styles.tabLabelHasData,
-                    ]}
-                  >
-                    {tab.label}
-                  </Text>
-                  {hasData && <View style={styles.tabDataIndicator} />}
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+        {renderTabNavigation()}
 
         {/* Content */}
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -1043,22 +1240,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: spacing.sm,
-  },
-  sizeRangeContainer: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: spacing.md,
-  },
-  sizeInputContainer: {
-    flex: 1,
-  },
-  sizeInput: {
-    marginBottom: 0,
-  },
-  sizeRangeSeparator: {
-    ...textStyles.body,
-    color: colors.neutral[600],
-    marginBottom: spacing.md,
   },
   roomOptionsContainer: {
     flexDirection: "row",

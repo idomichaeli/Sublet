@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, StyleSheet, Image } from "react-native";
+
+// Core imports
 import {
   colors,
   spacing,
@@ -7,21 +9,94 @@ import {
   borderRadius,
   shadows,
 } from "../../../shared/constants/tokens";
-import Button from "../../../shared/components/ui/Button";
-import { useFavoritesStore } from "../../../core/services/savedPropertiesStore";
 
+// Component imports
+import Button from "../../../shared/components/ui/Button";
+
+// Service imports
+import { useFavoritesStore } from "../../../core/services/savedPropertiesStore";
+import { useFilterStore } from "../../../core/services/propertyFilterStore";
+
+// Types
 interface SwipeEmptyStateProps {
   onReload: () => void;
   onChangeFilters: () => void;
   style?: any;
 }
 
+/**
+ * Empty state component for swipe discovery screen
+ * Shows different messages based on whether filters are active or not
+ */
 export default function SwipeEmptyState({
   onReload,
   onChangeFilters,
   style,
 }: SwipeEmptyStateProps) {
+  // Store hooks
   const { favorites } = useFavoritesStore();
+  const { hasNoMatchingProperties, appliedFilters } = useFilterStore();
+
+  /**
+   * Memoized active filters count
+   */
+  const activeFiltersCount = useMemo(() => {
+    return Object.keys(appliedFilters).length;
+  }, [appliedFilters]);
+
+  /**
+   * Memoized has active filters flag
+   */
+  const hasActiveFilters = useMemo(() => {
+    return activeFiltersCount > 0;
+  }, [activeFiltersCount]);
+
+  /**
+   * Memoized empty state type
+   */
+  const emptyStateType = useMemo(() => {
+    return hasNoMatchingProperties && hasActiveFilters
+      ? "no_matching_properties"
+      : "no_more_properties";
+  }, [hasNoMatchingProperties, hasActiveFilters]);
+
+  /**
+   * Memoized empty state content
+   */
+  const emptyStateContent = useMemo(() => {
+    switch (emptyStateType) {
+      case "no_matching_properties":
+        return {
+          title: "No matching properties!",
+          subtitle:
+            "No properties match your current filters. Try adjusting your search criteria to see more results.",
+          buttonText: "Adjust Filters",
+        };
+      case "no_more_properties":
+      default:
+        return {
+          title: "No more apartments!",
+          subtitle:
+            "You've seen all available apartments in your area. Try adjusting your filters or check back later for new listings.",
+          buttonText: "Change Filters",
+        };
+    }
+  }, [emptyStateType]);
+
+  /**
+   * Memoized stats data
+   */
+  const statsData = useMemo(() => {
+    const likedCount = favorites.length;
+    const passedCount = 0; // TODO: Track passed count
+    const totalCount = likedCount + passedCount;
+
+    return {
+      liked: likedCount,
+      passed: passedCount,
+      total: totalCount,
+    };
+  }, [favorites.length]);
 
   return (
     <View style={[styles.container, style]}>
@@ -36,18 +111,15 @@ export default function SwipeEmptyState({
         </View>
 
         {/* Title */}
-        <Text style={styles.title}>No more apartments!</Text>
+        <Text style={styles.title}>{emptyStateContent.title}</Text>
 
         {/* Subtitle */}
-        <Text style={styles.subtitle}>
-          You've seen all available apartments in your area. Try adjusting your
-          filters or check back later for new listings.
-        </Text>
+        <Text style={styles.subtitle}>{emptyStateContent.subtitle}</Text>
 
         {/* Action Buttons */}
         <View style={styles.actionsContainer}>
           <Button
-            title="Change Filters"
+            title={emptyStateContent.buttonText}
             variant="secondary"
             size="lg"
             style={styles.actionButton}
@@ -66,21 +138,21 @@ export default function SwipeEmptyState({
         {/* Stats */}
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{favorites.length}</Text>
+            <Text style={styles.statNumber}>{statsData.liked}</Text>
             <Text style={styles.statLabel}>Liked</Text>
           </View>
 
           <View style={styles.statDivider} />
 
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>0</Text>
+            <Text style={styles.statNumber}>{statsData.passed}</Text>
             <Text style={styles.statLabel}>Passed</Text>
           </View>
 
           <View style={styles.statDivider} />
 
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{favorites.length}</Text>
+            <Text style={styles.statNumber}>{statsData.total}</Text>
             <Text style={styles.statLabel}>Total</Text>
           </View>
         </View>
