@@ -17,6 +17,7 @@ interface SwipeStackProps {
   onSwipeLeft: (item: SwipeCardData) => void;
   onSwipeUp: (item: SwipeCardData) => void;
   onEmpty: () => void;
+  navigation?: any;
 }
 
 export default function SwipeStack({
@@ -25,6 +26,7 @@ export default function SwipeStack({
   onSwipeLeft,
   onSwipeUp,
   onEmpty,
+  navigation,
 }: SwipeStackProps) {
   const currentIndex = useRef(0);
   const position = useRef(new Animated.ValueXY()).current;
@@ -209,7 +211,15 @@ export default function SwipeStack({
       >
         <SwipeCard
           data={currentCard}
-          onMoreInfoPress={() => onSwipeUp(currentCard)}
+          onMoreInfoPress={() => {
+            if (navigation) {
+              navigation.navigate("ListingDetails", {
+                listingId: currentCard.id,
+              });
+            } else {
+              onSwipeUp(currentCard);
+            }
+          }}
         />
       </Animated.View>
     </View>
@@ -222,6 +232,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
     alignItems: "center",
     paddingTop: spacing.md,
+    paddingBottom: spacing.xl * 3, // Increased padding for the enhanced See More button
   },
   currentCard: {
     position: "absolute",

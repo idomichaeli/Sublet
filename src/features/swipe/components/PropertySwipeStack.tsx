@@ -19,6 +19,7 @@ interface SwipeStackProps {
   onSwipeRight?: (item: SwipeCardData) => void;
   onSwipeLeft?: (item: SwipeCardData) => void;
   onEmpty?: () => void;
+  navigation?: any;
 }
 
 export default function SwipeStack({
@@ -26,6 +27,7 @@ export default function SwipeStack({
   onSwipeRight,
   onSwipeLeft,
   onEmpty,
+  navigation,
 }: SwipeStackProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -246,6 +248,13 @@ export default function SwipeStack({
               // Toggle favorite and animate right swipe
               animateCardOut("right");
             }}
+            onMoreInfoPress={() => {
+              if (navigation) {
+                navigation.navigate("ListingDetails", {
+                  listingId: currentCard.id,
+                });
+              }
+            }}
           />
         </Animated.View>
       </PanGestureHandler>
@@ -259,6 +268,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     position: "relative",
+    paddingBottom: spacing.xl * 3, // Increased padding for the enhanced See More button
   },
   backgroundIndicator: {
     position: "absolute",

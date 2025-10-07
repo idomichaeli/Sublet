@@ -272,6 +272,7 @@ export default function SwipeDiscoveryScreen({
           onSwipeLeft={handleSwipeLeft}
           onSwipeUp={handleSwipeUp}
           onEmpty={handleEmpty}
+          navigation={navigation}
         />
       )}
     </View>

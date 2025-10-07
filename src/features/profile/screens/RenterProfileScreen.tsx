@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -6,27 +6,23 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Switch,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
-import { BlurView } from "expo-blur";
+import { Ionicons } from "@expo/vector-icons";
 import {
   colors,
   spacing,
   textStyles,
-  liquidGlass,
   withOpacity,
 } from "../../../shared/constants/tokens";
-import {
-  LiquidGlassCard,
-  LiquidGlassButton,
-  LiquidGlassSection,
-  LiquidGlassAvatar,
-} from "../../../shared/components/ui";
+import { LiquidGlassAvatar } from "../../../shared/components/ui";
 import { useAuthStore } from "../../../core/services/authenticationStore";
 
 export default function RenterProfileScreen() {
   const { user, logout, role, setRole } = useAuthStore();
+  const [pushNotifications, setPushNotifications] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
 
   const handleLogout = () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -59,208 +55,333 @@ export default function RenterProfileScreen() {
     );
   };
 
-  const quickActions = [
-    {
-      title: "Browse Properties",
-      subtitle: "Discover new places",
-      icon: "🔍",
-      onPress: () => console.log("Browse Properties"),
-    },
-    {
-      title: "My Bookings",
-      subtitle: "View your reservations",
-      icon: "📋",
-      onPress: () => console.log("My Bookings"),
-    },
-    {
-      title: "Favorites",
-      subtitle: "Your saved properties",
-      icon: "❤️",
-      onPress: () => console.log("Favorites"),
-    },
-    {
-      title: "Messages",
-      subtitle: "Chat with owners",
-      icon: "💬",
-      onPress: () => console.log("Messages"),
-    },
-  ];
+  const handleContactSupport = () => {
+    console.log("Contact Support");
+  };
 
-  const preferences = [
-    {
-      title: "Location Preferences",
-      subtitle: "Set your preferred areas",
-      icon: "📍",
-      onPress: () => console.log("Location Preferences"),
-    },
-    {
-      title: "Budget Range",
-      subtitle: "Manage your budget settings",
-      icon: "💰",
-      onPress: () => console.log("Budget Range"),
-    },
-    {
-      title: "Property Type",
-      subtitle: "Choose your preferred types",
-      icon: "🏠",
-      onPress: () => console.log("Property Type"),
-    },
-  ];
+  const handleEditContact = () => {
+    console.log("Edit Contact Information");
+  };
+
+  const handleLanguagePress = () => {
+    console.log("Language Settings");
+  };
+
+  const handlePrivacySecurity = () => {
+    console.log("Privacy & Security");
+  };
+
+  const handlePaymentMethods = () => {
+    console.log("Payment Methods");
+  };
+
+  const handleAccountSettings = () => {
+    console.log("Account Settings");
+  };
+
+  const handleHelpSupport = () => {
+    console.log("Help & Support");
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      {/* Background Gradient */}
-      <LinearGradient
-        colors={[
-          withOpacity(colors.secondary[500], "10"),
-          withOpacity(colors.secondary[600], "20"),
-          withOpacity(colors.neutral[0], "95"),
-        ]}
-        style={styles.backgroundGradient}
-      />
-
       <ScrollView
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Header Section */}
-        <LiquidGlassCard
-          variant="light"
-          style={styles.headerCard}
-          gradientColors={[
-            withOpacity(colors.secondary[500], "15"),
-            withOpacity(colors.secondary[600], "25"),
-          ]}
-        >
-          <View style={styles.headerContent}>
-            <LiquidGlassAvatar
-              name={user?.name}
-              size="xl"
-              variant="medium"
-              showGradient={true}
-              gradientColors={[
-                withOpacity(colors.secondary[500], "20"),
-                withOpacity(colors.secondary[600], "30"),
-              ]}
-            />
-            <View style={styles.userInfo}>
-              <Text style={styles.userName}>{user?.name || "Renter"}</Text>
-              <Text style={styles.userEmail}>
-                {user?.email || "renter@example.com"}
+        {/* Profile Header Section */}
+        <View style={styles.profileHeader}>
+          <View style={styles.profileInfo}>
+            <View style={styles.avatarContainer}>
+              <LiquidGlassAvatar
+                name={user?.name}
+                size="xl"
+                variant="medium"
+                showGradient={true}
+                gradientColors={[
+                  withOpacity(colors.primary[500], "20"),
+                  withOpacity(colors.primary[600], "30"),
+                ]}
+              />
+              <View style={styles.onlineStatus} />
+            </View>
+            <View style={styles.userDetails}>
+              <Text style={styles.userName}>
+                {user?.name || "Sarah Johnson"}
               </Text>
-              <View style={styles.roleBadge}>
-                <Text style={styles.roleText}>Renter</Text>
+              <View style={styles.locationRow}>
+                <Ionicons
+                  name="location-outline"
+                  size={16}
+                  color={colors.neutral[600]}
+                />
+                <Text style={styles.locationText}>New York, NY</Text>
+              </View>
+              <View style={styles.ratingRow}>
+                <Ionicons name="star" size={16} color={colors.warning[500]} />
+                <Text style={styles.ratingText}>4.9 (127 reviews)</Text>
               </View>
             </View>
+            <View style={styles.accountIcon}>
+              <Ionicons
+                name="person-circle"
+                size={24}
+                color={colors.primary[500]}
+              />
+            </View>
           </View>
-        </LiquidGlassCard>
 
-        {/* Quick Actions */}
-        <LiquidGlassSection
-          title="Quick Actions"
-          subtitle="Explore and manage your rentals"
-          variant="medium"
-          showGradient={true}
-          style={styles.actionsSection}
-        >
-          <View style={styles.actionsGrid}>
-            {quickActions.map((action, index) => (
-              <LiquidGlassCard
-                key={index}
-                variant="light"
-                style={styles.actionCard}
-                onPress={action.onPress}
-              >
-                <View style={styles.actionContent}>
-                  <Text style={styles.actionIcon}>{action.icon}</Text>
-                  <Text style={styles.actionTitle}>{action.title}</Text>
-                  <Text style={styles.actionSubtitle}>{action.subtitle}</Text>
-                </View>
-              </LiquidGlassCard>
-            ))}
+          {/* Account Summary Card */}
+          <View style={styles.accountSummaryCard}>
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryLabel}>Member since</Text>
+              <Text style={styles.summaryValue}>March 2022</Text>
+            </View>
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryLabel}>Total rentals</Text>
+              <Text style={styles.summaryValue}>23</Text>
+            </View>
           </View>
-        </LiquidGlassSection>
+        </View>
 
-        {/* Preferences */}
-        <LiquidGlassSection
-          title="Preferences"
-          subtitle="Customize your search experience"
-          variant="medium"
-          showGradient={true}
-          style={styles.preferencesSection}
-        >
-          <View style={styles.preferencesList}>
-            {preferences.map((preference, index) => (
-              <LiquidGlassCard
-                key={index}
-                variant="light"
-                style={styles.preferenceCard}
-                onPress={preference.onPress}
-              >
-                <View style={styles.preferenceContent}>
-                  <Text style={styles.preferenceIcon}>{preference.icon}</Text>
-                  <View style={styles.preferenceText}>
-                    <Text style={styles.preferenceTitle}>
-                      {preference.title}
-                    </Text>
-                    <Text style={styles.preferenceSubtitle}>
-                      {preference.subtitle}
-                    </Text>
-                  </View>
-                  <Text style={styles.chevron}>›</Text>
-                </View>
-              </LiquidGlassCard>
-            ))}
+        {/* Contact & Verification Section */}
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <Ionicons
+              name="shield-checkmark-outline"
+              size={20}
+              color={colors.primary[500]}
+            />
+            <Text style={styles.sectionTitle}>Contact & Verification</Text>
           </View>
-        </LiquidGlassSection>
 
-        {/* Account Settings */}
-        <LiquidGlassSection
-          title="Account"
-          variant="medium"
-          showGradient={true}
-          style={styles.settingsSection}
-        >
-          <View style={styles.settingsList}>
-            <LiquidGlassButton
-              label="Switch to Owner Mode"
-              icon="🏠"
-              variant="secondary"
-              size="md"
-              fullWidth={true}
-              onPress={handleSwitchToOwner}
-              style={styles.settingButton}
+          <View style={styles.contactItem}>
+            <Ionicons
+              name="mail-outline"
+              size={20}
+              color={colors.neutral[600]}
             />
-            <LiquidGlassButton
-              label="Account Settings"
-              icon="⚙️"
-              variant="ghost"
-              size="md"
-              fullWidth={true}
-              onPress={() => console.log("Account Settings")}
-              style={styles.settingButton}
+            <View style={styles.contactInfo}>
+              <Text style={styles.contactLabel}>Email</Text>
+              <Text style={styles.contactValue}>
+                {user?.email || "sarah.johnson@email.com"}
+              </Text>
+            </View>
+            <View style={styles.verifiedBadge}>
+              <Text style={styles.verifiedText}>Verified</Text>
+            </View>
+          </View>
+
+          <View style={styles.contactItem}>
+            <Ionicons
+              name="call-outline"
+              size={20}
+              color={colors.neutral[600]}
             />
-            <LiquidGlassButton
-              label="Help & Support"
-              icon="❓"
-              variant="ghost"
-              size="md"
-              fullWidth={true}
-              onPress={() => console.log("Help & Support")}
-              style={styles.settingButton}
+            <View style={styles.contactInfo}>
+              <Text style={styles.contactLabel}>Phone</Text>
+              <Text style={styles.contactValue}>+1 (555) 123-4567</Text>
+            </View>
+            <View style={styles.verifiedBadge}>
+              <Text style={styles.verifiedText}>Verified</Text>
+            </View>
+          </View>
+
+          <View style={styles.contactActions}>
+            <TouchableOpacity
+              style={styles.contactSupportButton}
+              onPress={handleContactSupport}
+            >
+              <Ionicons
+                name="chatbubble-outline"
+                size={20}
+                color={colors.neutral[0]}
+              />
+              <Text style={styles.contactSupportText}>Contact Support</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.editContactButton}
+              onPress={handleEditContact}
+            >
+              <Text style={styles.editContactText}>
+                Edit Contact Information
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Preferences Section */}
+        <View style={styles.sectionCard}>
+          <Text style={styles.sectionTitle}>Preferences</Text>
+
+          <View style={styles.preferenceItem}>
+            <Ionicons
+              name="notifications-outline"
+              size={20}
+              color={colors.neutral[600]}
             />
-            <LiquidGlassButton
-              label="Sign Out"
-              icon="🚪"
-              variant="error"
-              size="md"
-              fullWidth={true}
-              onPress={handleLogout}
-              style={styles.settingButton}
+            <Text style={styles.preferenceLabel}>Push Notifications</Text>
+            <Switch
+              value={pushNotifications}
+              onValueChange={setPushNotifications}
+              trackColor={{
+                false: colors.neutral[300],
+                true: colors.primary[500],
+              }}
+              thumbColor={colors.neutral[0]}
             />
           </View>
-        </LiquidGlassSection>
+
+          <View style={styles.preferenceItem}>
+            <Ionicons
+              name="moon-outline"
+              size={20}
+              color={colors.neutral[600]}
+            />
+            <Text style={styles.preferenceLabel}>Dark Mode</Text>
+            <Switch
+              value={darkMode}
+              onValueChange={setDarkMode}
+              trackColor={{
+                false: colors.neutral[300],
+                true: colors.primary[500],
+              }}
+              thumbColor={colors.neutral[0]}
+            />
+          </View>
+
+          <TouchableOpacity
+            style={styles.preferenceItem}
+            onPress={handleLanguagePress}
+          >
+            <Ionicons
+              name="globe-outline"
+              size={20}
+              color={colors.neutral[600]}
+            />
+            <View style={styles.preferenceInfo}>
+              <Text style={styles.preferenceLabel}>Language</Text>
+              <Text style={styles.preferenceSubtext}>English</Text>
+            </View>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={colors.neutral[400]}
+            />
+          </TouchableOpacity>
+        </View>
+
+        {/* Account Section */}
+        <View style={styles.sectionCard}>
+          <Text style={styles.sectionTitle}>Account</Text>
+
+          <TouchableOpacity
+            style={styles.accountItem}
+            onPress={handleSwitchToOwner}
+          >
+            <Ionicons
+              name="home-outline"
+              size={20}
+              color={colors.primary[500]}
+            />
+            <Text style={[styles.accountLabel, { color: colors.primary[500] }]}>
+              Switch to Owner Mode
+            </Text>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={colors.neutral[400]}
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.accountItem}
+            onPress={handlePrivacySecurity}
+          >
+            <Ionicons
+              name="shield-outline"
+              size={20}
+              color={colors.neutral[600]}
+            />
+            <Text style={styles.accountLabel}>Privacy & Security</Text>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={colors.neutral[400]}
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.accountItem}
+            onPress={handlePaymentMethods}
+          >
+            <Ionicons
+              name="card-outline"
+              size={20}
+              color={colors.neutral[600]}
+            />
+            <Text style={styles.accountLabel}>Payment Methods</Text>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={colors.neutral[400]}
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.accountItem}
+            onPress={handleAccountSettings}
+          >
+            <Ionicons
+              name="settings-outline"
+              size={20}
+              color={colors.neutral[600]}
+            />
+            <Text style={styles.accountLabel}>Account Settings</Text>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={colors.neutral[400]}
+            />
+          </TouchableOpacity>
+        </View>
+
+        {/* Support Section */}
+        <View style={styles.sectionCard}>
+          <Text style={styles.sectionTitle}>Support</Text>
+
+          <TouchableOpacity
+            style={styles.supportItem}
+            onPress={handleHelpSupport}
+          >
+            <Ionicons
+              name="help-circle-outline"
+              size={20}
+              color={colors.neutral[600]}
+            />
+            <Text style={styles.supportLabel}>Help & Support</Text>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={colors.neutral[400]}
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.supportItem} onPress={handleLogout}>
+            <Ionicons
+              name="log-out-outline"
+              size={20}
+              color={colors.neutral[600]}
+            />
+            <Text style={styles.supportLabel}>Log Out</Text>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={colors.neutral[400]}
+            />
+          </TouchableOpacity>
+        </View>
 
         {/* Bottom Spacing */}
         <View style={styles.bottomSpacing} />
@@ -274,129 +395,224 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.neutral[50],
   },
-  backgroundGradient: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
   scrollContainer: {
     flex: 1,
   },
   scrollContent: {
     padding: spacing.lg,
   },
-  headerCard: {
+
+  // Profile Header Styles
+  profileHeader: {
     marginBottom: spacing.lg,
   },
-  headerContent: {
+  profileInfo: {
     flexDirection: "row",
     alignItems: "center",
-    padding: spacing.md,
+    marginBottom: spacing.md,
   },
-  userInfo: {
+  avatarContainer: {
+    position: "relative",
+    marginRight: spacing.md,
+  },
+  onlineStatus: {
+    position: "absolute",
+    bottom: 2,
+    right: 2,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: colors.success[500],
+    borderWidth: 2,
+    borderColor: colors.neutral[0],
+  },
+  userDetails: {
     flex: 1,
-    marginLeft: spacing.lg,
   },
   userName: {
     ...textStyles.h2,
-    color: colors.neutral[800],
+    color: colors.neutral[900],
     marginBottom: spacing.xs,
   },
-  userEmail: {
+  locationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: spacing.xs,
+  },
+  locationText: {
     ...textStyles.body,
     color: colors.neutral[600],
-    marginBottom: spacing.sm,
+    marginLeft: spacing.xs,
   },
-  roleBadge: {
-    alignSelf: "flex-start",
-    backgroundColor: withOpacity(colors.secondary[500], "20"),
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: liquidGlass.radius.md,
-  },
-  roleText: {
-    ...textStyles.caption,
-    color: colors.secondary[600],
-    fontWeight: "600",
-  },
-  actionsSection: {
-    marginBottom: spacing.lg,
-  },
-  actionsGrid: {
+  ratingRow: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.md,
-  },
-  actionCard: {
-    flex: 1,
-    minWidth: "45%",
-  },
-  actionContent: {
     alignItems: "center",
-    padding: spacing.sm,
   },
-  actionIcon: {
-    fontSize: 24,
-    marginBottom: spacing.xs,
+  ratingText: {
+    ...textStyles.body,
+    color: colors.neutral[600],
+    marginLeft: spacing.xs,
   },
-  actionTitle: {
-    ...textStyles.h4,
-    color: colors.neutral[800],
-    fontWeight: "600",
-    marginBottom: spacing.xs,
-    textAlign: "center",
+  accountIcon: {
+    padding: spacing.xs,
   },
-  actionSubtitle: {
+  accountSummaryCard: {
+    backgroundColor: withOpacity(colors.primary[500], "10"),
+    borderRadius: 12,
+    padding: spacing.md,
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  summaryItem: {
+    alignItems: "center",
+  },
+  summaryLabel: {
     ...textStyles.caption,
     color: colors.neutral[600],
-    textAlign: "center",
+    marginBottom: spacing.xs,
   },
-  preferencesSection: {
+  summaryValue: {
+    ...textStyles.h4,
+    color: colors.primary[600],
+    fontWeight: "600",
+  },
+
+  // Section Card Styles
+  sectionCard: {
+    backgroundColor: colors.neutral[0],
+    borderRadius: 12,
+    padding: spacing.md,
     marginBottom: spacing.lg,
+    shadowColor: colors.neutral[900],
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  preferencesList: {
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: spacing.md,
+  },
+  sectionTitle: {
+    ...textStyles.h3,
+    color: colors.neutral[800],
+    marginLeft: spacing.sm,
+    fontWeight: "600",
+  },
+
+  // Contact & Verification Styles
+  contactItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.neutral[100],
+  },
+  contactInfo: {
+    flex: 1,
+    marginLeft: spacing.md,
+  },
+  contactLabel: {
+    ...textStyles.caption,
+    color: colors.neutral[600],
+    fontWeight: "600",
+    marginBottom: spacing.xs,
+  },
+  contactValue: {
+    ...textStyles.body,
+    color: colors.neutral[800],
+  },
+  verifiedBadge: {
+    backgroundColor: colors.success[500],
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: 12,
+  },
+  verifiedText: {
+    ...textStyles.caption,
+    color: colors.neutral[0],
+    fontWeight: "600",
+  },
+  contactActions: {
+    marginTop: spacing.md,
     gap: spacing.sm,
   },
-  preferenceCard: {
-    marginBottom: spacing.sm,
-  },
-  preferenceContent: {
+  contactSupportButton: {
+    backgroundColor: colors.primary[500],
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     padding: spacing.md,
+    borderRadius: 8,
   },
-  preferenceIcon: {
-    fontSize: 24,
-    marginRight: spacing.md,
+  contactSupportText: {
+    ...textStyles.button,
+    color: colors.neutral[0],
+    marginLeft: spacing.sm,
   },
-  preferenceText: {
+  editContactButton: {
+    backgroundColor: colors.neutral[100],
+    alignItems: "center",
+    padding: spacing.md,
+    borderRadius: 8,
+  },
+  editContactText: {
+    ...textStyles.button,
+    color: colors.primary[500],
+  },
+
+  // Preferences Styles
+  preferenceItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.neutral[100],
+  },
+  preferenceInfo: {
     flex: 1,
+    marginLeft: spacing.md,
   },
-  preferenceTitle: {
-    ...textStyles.h4,
+  preferenceLabel: {
+    ...textStyles.body,
     color: colors.neutral[800],
-    fontWeight: "600",
-    marginBottom: spacing.xs,
+    fontWeight: "500",
   },
-  preferenceSubtitle: {
+  preferenceSubtext: {
     ...textStyles.caption,
     color: colors.neutral[600],
+    marginTop: spacing.xs,
   },
-  chevron: {
-    fontSize: 20,
-    color: colors.neutral[400],
+
+  // Account & Support Styles
+  accountItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.neutral[100],
   },
-  settingsSection: {
-    marginBottom: spacing.lg,
+  accountLabel: {
+    ...textStyles.body,
+    color: colors.neutral[800],
+    flex: 1,
+    marginLeft: spacing.md,
   },
-  settingsList: {
-    gap: spacing.md,
+  supportItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.neutral[100],
   },
-  settingButton: {
-    marginBottom: spacing.sm,
+  supportLabel: {
+    ...textStyles.body,
+    color: colors.neutral[800],
+    flex: 1,
+    marginLeft: spacing.md,
   },
+
   bottomSpacing: {
     height: spacing.xl,
   },
